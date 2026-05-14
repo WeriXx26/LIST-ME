@@ -21,6 +21,7 @@
     </nav>
 
     <main id="app">
+        <!-- Page Tâches -->
         <section id="tasks-page">
             <div class="header-action">
                 <h2>Mes Tâches</h2>
@@ -29,6 +30,7 @@
             <div id="task-list" class="list-container"></div>
         </section>
 
+        <!-- Page To-Do List -->
         <section id="todo-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-daily" class="bubble active" onclick="setTodoMode('daily')">Journalier</button>
@@ -38,6 +40,7 @@
             <div id="todo-content"></div>
         </section>
 
+        <!-- Page Calendrier -->
         <section id="calendar-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-year" class="bubble" onclick="setViewState('year')">Année</button>
@@ -51,6 +54,7 @@
         </section>
     </main>
 
+    <!-- Modal Tâches -->
     <div id="task-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Nouvelle Tâche</h3>
@@ -68,6 +72,7 @@
         </div>
     </div>
 
+    <!-- Modal To-Do -->
     <div id="todo-modal" class="modal">
         <div class="modal-content">
             <h3>Ajouter au Planning</h3>
