@@ -95,7 +95,7 @@ document.getElementById('save-task').onclick = () => {
     }
 };
 
-// --- TODO / CALENDRIER ---
+// --- TODO / PLANNING ---
 function setTodoMode(mode) {
     todoMode = mode;
     document.querySelectorAll('#todo-page .bubble').forEach(b => b.classList.remove('active'));
@@ -149,6 +149,7 @@ function toggleTodo(id) {
     renderTodo();
 }
 
+// --- CALENDRIER ---
 function setViewState(state) {
     viewState = state;
     document.querySelectorAll('#calendar-page .bubble').forEach(b => b.classList.remove('active'));
@@ -160,15 +161,19 @@ function renderCalendar() {
     const content = document.getElementById('calendar-content');
     const title = document.getElementById('calendar-title');
     content.innerHTML = '';
+    content.className = '';
+
     if (viewState === 'year') {
-        content.classList.add('grid-years');
+        title.innerText = "Choisir l'Année";
+        content.className = 'grid-years';
         for (let i = selectedYear - 5; i <= selectedYear + 3; i++) {
             const div = document.createElement('div'); div.className = `grid-item ${i === selectedYear ? 'selected' : ''}`;
             div.innerText = i; div.onclick = () => { selectedYear = i; setViewState('month'); };
             content.appendChild(div);
         }
     } else if (viewState === 'month') {
-        content.classList.add('grid-months');
+        title.innerText = selectedYear;
+        content.className = 'grid-months';
         monthNames.forEach((name, index) => {
             const div = document.createElement('div'); div.className = `grid-item ${index === selectedMonth ? 'selected' : ''}`;
             div.innerText = name; div.onclick = () => { selectedMonth = index; setViewState('day'); };
@@ -176,7 +181,7 @@ function renderCalendar() {
         });
     } else {
         title.innerText = `${monthNames[selectedMonth]} ${selectedYear}`;
-        content.classList.add('calendar-grid');
+        content.className = 'calendar-grid';
         const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
         for (let i = 1; i <= daysInMonth; i++) {
             const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
