@@ -2,9 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LIST'ME - Organisez votre vie</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4A90E2">
+    <title>LIST'ME</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,34 +26,35 @@
                 <h2>Mes Tâches</h2>
                 <button id="add-task-btn" class="btn-primary">+ Ajouter</button>
             </div>
-            <div id="task-list" class="list-container">
-                <!-- Les tâches s'afficheront ici -->
-            </div>
+            <div id="task-list" class="list-container"></div>
         </section>
 
         <!-- Page Calendrier -->
         <section id="calendar-page" style="display:none;">
-            <h2>Mon Calendrier</h2>
-            <div id="calendar-grid" class="calendar-grid">
-                <!-- Le calendrier sera généré ici -->
+            <h2>Calendrier</h2>
+            <div class="calendar-wrapper">
+                <div id="calendar-grid" class="calendar-grid"></div>
             </div>
         </section>
     </main>
 
-    <!-- Modal d'ajout de tâche -->
+    <!-- Modal -->
     <div id="task-modal" class="modal">
         <div class="modal-content">
             <h3>Nouvelle Tâche</h3>
-            <input type="text" id="task-name" placeholder="Nom de la tâche...">
+            <label>Nom de la tâche</label>
+            <input type="text" id="task-name" placeholder="Ex: Faire les courses">
+            <label>Date</label>
             <input type="date" id="task-date">
+            <label>Importance</label>
             <select id="task-importance">
-                <option value="low">Faible importance</option>
-                <option value="medium">Moyenne importance</option>
-                <option value="high">Haute importance</option>
+                <option value="low">Faible</option>
+                <option value="medium">Moyenne</option>
+                <option value="high">Haute</option>
             </select>
             <div class="modal-buttons">
                 <button id="save-task" class="btn-primary">Enregistrer</button>
-                <button id="close-modal">Annuler</button>
+                <button id="close-modal" class="btn-secondary">Annuler</button>
             </div>
         </div>
     </div>
