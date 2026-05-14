@@ -29,14 +29,21 @@
             <div id="task-list" class="list-container"></div>
         </section>
 
-        <!-- Page Calendrier -->
         <section id="calendar-page" style="display:none;">
-            <h2>Calendrier</h2>
-            <div class="calendar-wrapper">
-                <div id="calendar-grid" class="calendar-grid"></div>
-            </div>
-        </section>
-    </main>
+    <div class="calendar-nav">
+        <button id="btn-year" class="bubble" onclick="setViewState('year')">Année</button>
+        <button id="btn-month" class="bubble" onclick="setViewState('month')">Mois</button>
+        <button id="btn-day" class="bubble active" onclick="setViewState('day')">Jours</button>
+    </div>
+    
+    <div id="calendar-title" class="calendar-title">Mai 2024</div>
+
+    <div class="calendar-wrapper">
+        <div id="calendar-content" class="calendar-grid">
+            <!-- Le contenu (années, mois ou jours) s'affichera ici -->
+        </div>
+    </div>
+</section>
 
     <!-- Modal -->
     <div id="task-modal" class="modal">
