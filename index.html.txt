@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIST'ME - Organisez votre vie</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>LIST'ME</h1>
+        <div class="nav-links">
+            <button onclick="showPage('tasks')">Tâches</button>
+            <button onclick="showPage('calendar')">Calendrier</button>
+        </div>
+    </nav>
+
+    <main id="app">
+        <!-- Page Tâches -->
+        <section id="tasks-page">
+            <div class="header-action">
+                <h2>Mes Tâches</h2>
+                <button id="add-task-btn" class="btn-primary">+ Ajouter</button>
+            </div>
+            <div id="task-list" class="list-container">
+                <!-- Les tâches s'afficheront ici -->
+            </div>
+        </section>
+
+        <!-- Page Calendrier -->
+        <section id="calendar-page" style="display:none;">
+            <h2>Mon Calendrier</h2>
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- Le calendrier sera généré ici -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal d'ajout de tâche -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <h3>Nouvelle Tâche</h3>
+            <input type="text" id="task-name" placeholder="Nom de la tâche...">
+            <input type="date" id="task-date">
+            <select id="task-importance">
+                <option value="low">Faible importance</option>
+                <option value="medium">Moyenne importance</option>
+                <option value="high">Haute importance</option>
+            </select>
+            <div class="modal-buttons">
+                <button id="save-task" class="btn-primary">Enregistrer</button>
+                <button id="close-modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
