@@ -1,96 +1,102 @@
 :root {
     --primary: #4A90E2;
-    --bg: #F5F7FA;
+    --secondary: #6c757d;
+    --bg: #F0F2F5;
     --card: #FFFFFF;
-    --text: #333;
+    --text: #1C1E21;
 }
 
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg);
     margin: 0;
     color: var(--text);
+    line-height: 1.5;
 }
 
 .navbar {
     background: var(--primary);
     color: white;
-    padding: 1rem;
+    padding: env(safe-area-inset-top) 15px 10px 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: sticky;
     top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.navbar h1 { font-size: 1.4rem; margin: 0; }
 
 .nav-links button {
-    background: transparent;
-    border: 1px solid white;
-    color: white;
-    padding: 5px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-main { padding: 20px; max-width: 800px; margin: auto; }
-
-.header-action { display: flex; justify-content: space-between; align-items: center; }
-
-.btn-primary {
-    background: var(--primary);
-    color: white;
+    background: rgba(255,255,255,0.2);
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    margin-left: 5px;
 }
+
+main { padding: 15px; max-width: 600px; margin: auto; }
+
+.header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+.btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+.btn-secondary { background: var(--secondary); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; }
 
 .task-card {
     background: var(--card);
-    padding: 15px;
-    margin-top: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border-left: 5px solid #ccc;
+    padding: 18px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 6px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .high { border-left-color: #ff4d4d; }
 .medium { border-left-color: #ffa500; }
 .low { border-left-color: #2ecc71; }
 
-/* Modal */
+/* Modal Mobile Friendly */
 .modal {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    align-items: flex-end; /* Apparaît en bas comme sur iOS/Android */
+    z-index: 1000;
 }
 
 .modal-content {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    width: 300px;
+    gap: 12px;
+    animation: slideUp 0.3s ease-out;
 }
 
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    background: white;
-    padding: 10px;
-    border-radius: 10px;
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px; /* Important: évite le zoom auto sur iPhone */
 }
 
-.calendar-day {
-    min-height: 80px;
-    border: 1px solid #eee;
-    padding: 5px;
-    font-size: 0.8rem;
-}
+/* Calendrier */
+.calendar-wrapper { overflow-x: auto; background: white; border-radius: 12px; padding: 10px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); min-width: 300px; }
+.calendar-day { min-height: 60px; border: 0.5px solid #f0f0f0; padding: 4px; font-size: 0.7rem; }
+.calendar-day b { display: block; margin-bottom: 3px; color: #888; }
