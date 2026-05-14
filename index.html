@@ -6,11 +6,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4A90E2">
-    <title>LIST'ME</title>
+    <title>LIST'ME - Votre Assistant</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- Barre de navigation -->
     <nav class="navbar">
         <h1>LIST'ME</h1>
         <div class="nav-links">
@@ -21,26 +22,30 @@
     </nav>
 
     <main id="app">
-        <!-- Page Tâches -->
+        <!-- PAGE 1 : TÂCHES CLASSIQUES -->
         <section id="tasks-page">
             <div class="header-action">
                 <h2>Mes Tâches</h2>
                 <button id="add-task-btn" class="btn-primary">+ Ajouter</button>
             </div>
-            <div id="task-list" class="list-container"></div>
+            <div id="task-list" class="list-container">
+                <!-- Les tâches s'afficheront ici via script.js -->
+            </div>
         </section>
 
-        <!-- Page To-Do List -->
+        <!-- PAGE 2 : TO-DO LIST (JOURNALIÈRE) -->
         <section id="todo-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-daily" class="bubble active" onclick="setTodoMode('daily')">Journalier</button>
                 <button id="btn-weekly" class="bubble" onclick="setTodoMode('weekly')">Hebdo</button>
             </div>
-            <h3 id="todo-today-date" style="text-align: center; color: var(--primary);"></h3>
-            <div id="todo-content"></div>
+            <h3 id="todo-today-date" style="text-align: center; color: var(--primary); margin-bottom: 15px;"></h3>
+            <div id="todo-content">
+                <!-- L'emploi du temps s'affichera ici via script.js -->
+            </div>
         </section>
 
-        <!-- Page Calendrier -->
+        <!-- PAGE 3 : CALENDRIER DYNAMIQUE -->
         <section id="calendar-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-year" class="bubble" onclick="setViewState('year')">Année</button>
@@ -48,16 +53,23 @@
                 <button id="btn-day" class="bubble active" onclick="setViewState('day')">Jours</button>
             </div>
             <div id="calendar-title" class="calendar-title"></div>
-            <div id="calendar-content"></div>
+            <div class="calendar-wrapper">
+                <div id="calendar-content">
+                    <!-- Les grilles (Années, Mois, Jours) s'afficheront ici -->
+                </div>
+            </div>
         </section>
     </main>
 
-    <!-- Modal Tâche Classique -->
+    <!-- MODAL POUR LES TÂCHES CLASSIQUES -->
     <div id="task-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Nouvelle Tâche</h3>
-            <input type="text" id="task-name" placeholder="Nom de la tâche...">
+            <label>Nom de la tâche</label>
+            <input type="text" id="task-name" placeholder="Ex: Appeler le garage...">
+            <label>Date d'échéance</label>
             <input type="date" id="task-date">
+            <label>Niveau d'importance</label>
             <select id="task-importance">
                 <option value="high">Haute Importance</option>
                 <option value="medium">Moyenne Importance</option>
@@ -70,14 +82,14 @@
         </div>
     </div>
 
-    <!-- Modal Spécifique To-Do (Journalier) -->
+    <!-- MODAL SPÉCIFIQUE POUR LA TO-DO LIST (JOURNALIÈRE) -->
     <div id="todo-modal" class="modal">
         <div class="modal-content">
             <h3>Ajouter au Planning</h3>
-            <label>Heure (modifiable)</label>
+            <label>Heure de la tâche</label>
             <input type="time" id="todo-time">
-            <label>Tâche à réaliser</label>
-            <input type="text" id="todo-task-name" placeholder="Ex: Réunion client">
+            <label>Que devez-vous faire ?</label>
+            <input type="text" id="todo-task-name" placeholder="Ex: Séance de sport">
             <div class="modal-buttons">
                 <button id="save-todo" class="btn-primary">Ajouter</button>
                 <button onclick="document.getElementById('todo-modal').style.display='none'" class="btn-secondary">Annuler</button>
