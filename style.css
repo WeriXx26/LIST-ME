@@ -7,152 +7,50 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: var(--bg);
-    margin: 0;
-    color: var(--text);
-}
-
-.navbar {
-    background: var(--primary);
-    color: white;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.nav-links button {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-weight: bold;
-    margin-left: 5px;
-}
+.navbar { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.navbar h1 { font-size: 1.2rem; margin: 0; }
+.nav-links button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; margin-left: 5px; font-size: 0.8rem; }
 
 main { padding: 15px; max-width: 600px; margin: auto; }
 
-/* Navigation Calendrier (Bulles) */
-.calendar-nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
+.calendar-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+.bubble { background: #d1d9e6; border: none; padding: 10px 15px; border-radius: 25px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+.bubble.active { background: var(--primary); color: white; }
 
-.bubble {
-    background: #d1d9e6;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #555;
-    cursor: pointer;
-    transition: 0.3s;
-}
+/* Tâches et Check */
+.task-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 12px; border-left: 6px solid #ccc; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.3s; }
+.task-info { flex: 1; cursor: pointer; }
+.completed { opacity: 0.5; border-left-color: #bdc3c7 !important; }
+.completed strong { text-decoration: line-through; color: #7f8c8d; }
 
-.bubble.active {
-    background: var(--primary);
-    color: white;
-}
-
-.calendar-title {
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-    color: var(--primary);
-}
-
-/* Grilles dynamiques */
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    background: #eee;
-    border: 1px solid #eee;
-}
-
-.grid-years, .grid-months {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.grid-item {
-    background: white;
-    padding: 20px 10px;
-    text-align: center;
-    border-radius: 12px;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.grid-item.selected {
-    background: var(--primary);
-    color: white;
-}
-
-/* Cellules des jours */
-.day-card {
-    background: white;
-    min-height: 80px;
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.day-initial {
-    font-size: 0.65rem;
-    color: #999;
-    text-transform: uppercase;
-    margin-bottom: 2px;
-}
-
-.day-card b { font-size: 1rem; }
-
-/* Tâches */
-.task-card {
-    background: var(--card);
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 12px;
-    border-left: 6px solid #ccc;
-    display: flex;
-    justify-content: space-between;
-}
 .high { border-left-color: #ff4d4d; }
 .medium { border-left-color: #ffa500; }
 .low { border-left-color: #2ecc71; }
 
+.task-actions { display: flex; gap: 15px; }
+.edit-btn { color: var(--primary); background: none; border: none; font-size: 1.2rem; }
+.delete-btn { color: #ff4d4d; background: none; border: none; font-size: 1.2rem; }
+
+/* Planning */
+.schedule-container { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; }
+.time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 45px; }
+.time-label { width: 60px; font-size: 0.7rem; color: #888; padding: 12px 5px; border-right: 1px solid #f0f0f0; text-align: right; background: #fafafa; }
+.slot-content { flex: 1; padding: 10px; font-size: 0.8rem; cursor: pointer; }
+
+/* Calendrier */
+.calendar-title { text-align: center; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #eee; }
+.grid-years, .grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid-item { background: white; padding: 20px 10px; text-align: center; border-radius: 12px; font-weight: bold; }
+.grid-item.selected { background: var(--primary); color: white; }
+.day-card { background: white; min-height: 60px; padding: 5px; text-align: center; }
+.day-initial { display: block; font-size: 0.6rem; color: #999; text-transform: uppercase; }
+
 /* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    align-items: flex-end;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 20px 20px 0 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: flex-end; z-index: 1000; }
+.modal-content { background: white; padding: 20px; border-radius: 20px 20px 0 0; width: 100%; display: flex; flex-direction: column; gap: 12px; }
 input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
 .btn-primary { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; }
+.btn-secondary { background: var(--secondary); color: white; border: none; padding: 15px; border-radius: 10px; }
