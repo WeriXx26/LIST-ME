@@ -1,4 +1,4 @@
-/* --- 1. CONFIGURATION DE BASE --- */
+/* --- 1. CONFIGURATION ET POLICE --- */
 @font-face {
     font-family: 'Mogra';
     src: url('Mogra.ttf') format('truetype');
@@ -27,43 +27,43 @@ body {
         linear-gradient(45deg, transparent 37%, var(--line-color) 37%, var(--line-color) 38%, transparent 38%, transparent 62%, var(--line-color) 62%, var(--line-color) 63%, transparent 63%);
     background-size: 40px 40px, 60px 60px;
     background-attachment: fixed;
-    color: var(--text);
     min-height: 100vh;
 }
 
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label {
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, label {
     font-family: 'Mogra', cursive;
 }
 
-/* --- 2. NAVIGATION --- */
+/* --- 2. BARRE DE NAVIGATION --- */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;
     position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-.nav-links { display: flex; gap: 8px; }
 .nav-links button { 
     background: rgba(255,255,255,0.2); border: none; color: white; 
-    padding: 8px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;
+    padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-left: 5px;
 }
 
 main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* --- 3. EN-TÊTE (La Bulle Transparente) --- */
+/* --- 3. BULLE EN-TÊTE (Comme sur Screen 1) --- */
 .header-action { 
     display: flex; justify-content: space-between; align-items: center; 
     margin-bottom: 25px; padding: 15px 20px; border-radius: 25px;
     background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 #add-task-btn { 
-    padding: 6px 12px; font-size: 0.75rem; border-radius: 15px; 
-    border: none; background: white; color: var(--primary-dark); cursor: pointer;
+    padding: 8px 16px; border-radius: 20px; border: none; 
+    background: white; color: var(--primary-dark); cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* --- 4. LISTES ET TÂCHES --- */
+/* --- 4. TÂCHES ET CARTES --- */
 .task-card { 
     background: white; padding: 20px; margin-bottom: 20px;
     border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
@@ -72,37 +72,40 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
-.completed { opacity: 0.5; border-left-color: #bdc3c7 !important; font-style: italic; }
 
-/* --- 5. CALENDRIER (Grilles Fixes) --- */
-.calendar-wrapper { width: 100%; margin-top: 15px; }
-
-/* Grille pour les Jours (7 colonnes) */
-.calendar-grid { 
-    display: grid !important; 
-    grid-template-columns: repeat(7, 1fr) !important; 
-    gap: 5px; 
+/* --- 5. TO-DO LIST (Heures et Boutons Screen 2) --- */
+.calendar-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+.bubble { 
+    background: white; border: none; padding: 10px 20px; border-radius: 30px; 
+    color: var(--primary-dark); box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
 }
+.bubble.active { background: var(--primary); color: white; }
 
-/* Grille pour Années et Mois (3 colonnes) */
-.grid-years, .grid-months { 
-    display: grid !important; 
-    grid-template-columns: repeat(3, 1fr) !important; 
-    gap: 12px; 
+.schedule-container { 
+    background: white; border-radius: 25px; overflow: hidden; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
+.time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 75px; }
+.time-label { 
+    width: 85px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+    background: #fdfdfd; color: var(--primary-dark); border-right: 2px solid #eee;
+}
+.slot-content { flex: 1; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+
+/* --- 6. CALENDRIER (Grilles Screen 3) --- */
+.calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
+.grid-years, .grid-months { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px; }
 
 .grid-item { 
-    background: white; padding: 20px 5px; text-align: center; border-radius: 15px; 
-    font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background: white; padding: 20px 5px; text-align: center; border-radius: 20px; 
+    font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 .grid-item.selected { background: var(--primary); color: white; }
 
-.day-card { background: white; border-radius: 10px; padding: 10px 2px; min-height: 70px; text-align: center; border: 1px solid #f0f0f0; }
-.day-card.has-high { border-bottom: 4px solid var(--danger); background: #ffebeb; }
-.day-card.has-medium { border-bottom: 4px solid var(--warning); background: #fff8eb; }
-.day-card.has-low { border-bottom: 4px solid var(--success); background: #f0fbf0; }
+.day-card { background: white; border-radius: 15px; padding: 10px 5px; min-height: 80px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+.day-card.has-high { border-bottom: 5px solid var(--danger); background: #ffebeb; }
 
-/* --- 6. MODALS --- */
+/* --- 7. MODALS (Screen 1 & 3) --- */
 .modal { 
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0,0,0,0.6); z-index: 11000; align-items: flex-end; 
@@ -110,4 +113,16 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 .modal-content { 
     background: white; width: 100%; padding: 30px; 
     border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; 
+}
+input, select { 
+    width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #eee; 
+    font-size: 1rem; background: #f9f9f9; outline: none;
+}
+.btn-primary { 
+    background: var(--primary); color: white; border: none; padding: 16px; 
+    border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+}
+.btn-secondary { 
+    background: #edf2f7; color: #718096; border: none; padding: 16px; 
+    border-radius: 15px; font-weight: bold; cursor: pointer;
 }
