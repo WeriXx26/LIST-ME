@@ -1,3 +1,4 @@
+// --- DONNÉES ---
 let tasks = JSON.parse(localStorage.getItem('listme_tasks')) || [];
 let dailyTodo = JSON.parse(localStorage.getItem('listme_todo')) || [];
 let viewState = 'day'; 
@@ -8,9 +9,9 @@ let selectedMonth = new Date().getMonth();
 
 const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const dayInitials = ["D", "L", "M", "M", "J", "V", "S"];
-const importanceOrder = { 'high': 1, 'medium': 2, 'low': 3 };
 const todayStr = new Date().toISOString().split('T')[0];
 
+// --- NAVIGATION ---
 function showPage(pageId) {
     document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
     const target = document.getElementById(`${pageId}-page`);
@@ -22,13 +23,13 @@ function showPage(pageId) {
     window.scrollTo(0,0);
 }
 
+// --- TÂCHES ---
 function renderTasks() {
     const container = document.getElementById('task-list');
     container.innerHTML = '';
-    tasks.sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        return importanceOrder[a.importance] - importanceOrder[b.importance];
-    });
+    
+    tasks.sort((a, b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
+
     tasks.forEach(task => {
         const div = document.createElement('div');
         div.className = `task-card ${task.importance} ${task.completed ? 'completed' : ''}`;
@@ -37,8 +38,8 @@ function renderTasks() {
                 <strong>${task.completed ? '✓ ' : ''}${task.name}</strong><br><small>${task.date}</small>
             </div>
             <div class="task-actions">
-                <button onclick="editTask(${task.id})" style="border:none; background:none; color:var(--primary); font-size:1.2rem;">✎</button>
-                <button onclick="deleteTask(${task.id})" style="border:none; background:none; color:var(--danger); font-size:1.2rem;">×</button>
+                <button onclick="editTask(${task.id})" style="border:none; background:none; color:var(--primary); font-size:1.2rem; cursor:pointer;">✎</button>
+                <button onclick="deleteTask(${task.id})" style="border:none; background:none; color:var(--danger); font-size:1.2rem; cursor:pointer;">×</button>
             </div>`;
         container.appendChild(div);
     });
@@ -54,23 +55,15 @@ document.getElementById('add-task-btn').onclick = () => {
 function toggleTaskCheck(id) {
     const idx = tasks.findIndex(t => t.id === id);
     tasks[idx].completed = !tasks[idx].completed;
-    localStorage.setItem('listme_tasks', JSON.stringify(tasks));
-    renderTasks();
-}
-
-function editTask(id) {
-    const task = tasks.find(t => t.id === id);
-    if(task) {
-        editingId = id;
-        document.getElementById('task-name').value = task.name;
-        document.getElementById('task-date').value = task.date;
-        document.getElementById('task-importance').value = task.importance;
-        document.getElementById('task-modal').style.display = 'flex';
-    }
+    saveTasks();
 }
 
 function deleteTask(id) {
     tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+}
+
+function saveTasks() {
     localStorage.setItem('listme_tasks', JSON.stringify(tasks));
     renderTasks();
 }
@@ -83,16 +76,15 @@ document.getElementById('save-task').onclick = () => {
         if(editingId) {
             const index = tasks.findIndex(t => t.id === editingId);
             tasks[index] = { ...tasks[index], name, date, importance };
-            editingId = null;
         } else {
             tasks.push({ name, date, importance, id: Date.now(), completed: false });
         }
-        localStorage.setItem('listme_tasks', JSON.stringify(tasks));
-        renderTasks();
+        saveTasks();
         document.getElementById('task-modal').style.display = 'none';
     }
 };
 
+// --- CALENDRIER ---
 function setViewState(state) {
     viewState = state;
     document.querySelectorAll('#calendar-page .bubble').forEach(b => b.classList.remove('active'));
@@ -137,15 +129,14 @@ function renderCalendar() {
                 if(imps.includes('high')) dayDiv.classList.add('has-high');
                 else if(imps.includes('medium')) dayDiv.classList.add('has-medium');
                 else dayDiv.classList.add('has-low');
-                dayDiv.onclick = () => alert(`Tâches du ${i}:\n` + dayTasks.map(t => `- ${t.name}`).join('\n'));
             }
             const dateObj = new Date(selectedYear, selectedMonth, i);
-            dayDiv.innerHTML = `<span class="day-initial">${dayInitials[dateObj.getDay()]}</span><b>${i}</b>`;
+            dayDiv.innerHTML = `<span style="font-size:0.6rem; color:#aaa; display:block;">${dayInitials[dateObj.getDay()]}</span><b>${i}</b>`;
             content.appendChild(dayDiv);
         }
     }
 }
 
-// Initialisation au chargement
+// Initialisation
 renderTasks();
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
