@@ -18,6 +18,39 @@
             <button onclick="showPage('tasks')">Tâches</button>
             <button onclick="showPage('todo')">To-Do List</button>
             <button onclick="showPage('calendar')">Calendrier</button>
+            <button onclick="showPage('profile')">Profil</button>
+
+<section id="profile-page" style="display:none;">
+    <div class="header-action">
+        <h2>Mon Profil</h2>
+    </div>
+
+    <div class="profile-card">
+        <label>Adresse e-mail</label>
+        <input type="email" id="user-email" placeholder="votre@mail.com">
+        
+        <label>Mot de passe</label>
+        <input type="password" id="user-pass" placeholder="••••••••">
+        
+        <button class="btn-primary" style="margin-top: 10px;">Enregistrer les infos</button>
+    </div>
+
+    <div class="header-action" style="margin-top: 30px;">
+        <h2>Personnalisation</h2>
+    </div>
+
+    <div class="theme-selector">
+        <div class="theme-option pink" onclick="changeTheme('pink')">
+            <span>Bonbon</span>
+        </div>
+        <div class="theme-option dark" onclick="changeTheme('dark')">
+            <span>Sombre</span>
+        </div>
+        <div class="theme-option ocean" onclick="changeTheme('ocean')">
+            <span>Océan</span>
+        </div>
+    </div>
+</section>
         </div>
     </nav>
 
