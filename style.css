@@ -1,4 +1,3 @@
-/* --- 1. POLICE MOGRA --- */
 @font-face {
     font-family: 'Mogra';
     src: url('Mogra.ttf') format('truetype');
@@ -6,13 +5,11 @@
     font-style: normal;
 }
 
-/* --- 2. NOUVELLES COULEURS --- */
 :root {
-    --primary: #00CED1; /* Bleu Turquoise plus prononcé */
-    --primary-dark: #008B8B; 
-    --bg-deep-pink: #FF1493; /* Rose foncé profond (Deep Pink) */
-    --bg-slash-pink: #FF69B4; /* Rose pour les griffures (Hot Pink) */
-    --card: rgba(255, 255, 255, 0.95);
+    --primary: #00CED1;
+    --primary-dark: #008B8B;
+    --bg-pink: #FAD0C4; /* Rose beaucoup plus doux */
+    --slash-color: rgba(255, 255, 255, 0.3);
     --text: #2C3E50;
     --danger: #FF4757;
     --warning: #FFA502;
@@ -22,119 +19,82 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    /* FOND GRIFFURES (SLASH) STYLE */
-    background-color: var(--bg-deep-pink);
-    background-image: repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 35px,
-        rgba(255, 105, 180, 0.4) 35px,
-        rgba(255, 105, 180, 0.4) 40px
-    );
+    font-family: -apple-system, sans-serif; 
+    background-color: var(--bg-pink);
+    /* Effet rayures entrecoupées */
+    background-image: 
+        linear-gradient(45deg, var(--slash-color) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--slash-color) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--slash-color) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--slash-color) 75%);
+    background-size: 60px 60px;
     background-attachment: fixed;
     margin: 0; 
     color: var(--text); 
     min-height: 100vh;
 }
 
-/* --- 3. TITRES MOGRA --- */
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble.active, #modal-title, label {
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label {
     font-family: 'Mogra', cursive;
     font-weight: normal;
 }
 
-/* --- 4. NAVBAR BLEU TURQUOISE --- */
+/* NAVBAR */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; 
     padding: 15px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 1000;
 }
 
+.nav-links { display: flex; gap: 8px; }
 .nav-links button { 
-    background: rgba(255,255,255,0.25); 
-    border: none; 
-    color: white; 
-    padding: 8px 12px; 
-    border-radius: 20px; 
-    font-weight: bold; 
-    margin-left: 5px;
+    background: rgba(255,255,255,0.2); border: none; color: white; 
+    padding: 8px 12px; border-radius: 20px; font-size: 0.7rem;
 }
 
-main { padding: 15px; max-width: 600px; margin: auto; }
+main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* --- 5. TACHES ET CARTES --- */
+/* CARTES TACHES */
 .task-card { 
-    background: var(--card);
-    padding: 18px; 
-    margin-bottom: 12px; 
-    border-radius: 20px; 
-    border-left: 10px solid #ccc; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    background: white; padding: 20px; margin-bottom: 20px; /* Plus d'espace */
+    border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
+/* IMPORTANT : Correction de l'affichage des couleurs */
+.task-card.high { border-left: 12px solid var(--danger); }
+.task-card.medium { border-left: 12px solid var(--warning); }
+.task-card.low { border-left: 12px solid var(--success); }
 
-#add-task-btn { background: white; color: var(--primary-dark); border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+/* TO-DO LIST (Heures) */
+.calendar-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+.bubble { 
+    background: white; border: none; padding: 12px 20px; border-radius: 30px; 
+    color: var(--primary-dark); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.bubble.active { background: var(--primary); color: white; }
 
-/* --- 6. CORRECTION DES MODALS (PROBLEME CAPTURE) --- */
+.schedule-container { background: white; border-radius: 25px; overflow: hidden; }
+.time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 70px; }
+.time-label { 
+    width: 80px; font-size: 1.1rem; /* Plus gros */
+    display: flex; align-items: center; justify-content: center;
+    background: #f9f9f9; color: var(--primary-dark); border-right: 2px solid #eee;
+}
+.slot-content { flex: 1; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
+
+/* MODALS (Correction capture 2,3,4) */
 .modal { 
-    display: none; 
-    position: fixed; 
-    top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.7); 
-    align-items: center; /* Centré sur PC */
-    justify-content: center;
-    z-index: 2000; 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; 
 }
-
 .modal-content { 
-    background: white; 
-    padding: 30px; 
-    border-radius: 25px; 
-    width: 90%; 
-    max-width: 450px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    background: white; width: 100%; padding: 30px; 
+    border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 20px; 
 }
+.modal-buttons { display: flex; gap: 10px; }
 
-/* Boutons des modals plus stylés */
-.modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
-
-.btn-primary { 
-    flex: 2; background: var(--primary); color: white; border: none; 
-    padding: 15px; border-radius: 15px; font-weight: bold; font-family: 'Mogra'; cursor: pointer; 
-}
-
-.btn-secondary { 
-    flex: 1; background: #eee; color: #666; border: none; 
-    padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer;
-}
-
-input, select { 
-    width: 100%; padding: 15px; border-radius: 12px; 
-    border: 2px solid #f0f0f0; font-size: 16px; background: #fafafa;
-}
-
-/* --- 7. CALENDRIER --- */
-.day-card { 
-    background: white; min-height: 65px; border-radius: 12px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.calendar-grid { gap: 8px; }
-
-/* Responsive : On bascule la modal en bas pour le téléphone */
-@media (max-width: 600px) {
-    .modal { align-items: flex-end; }
-    .modal-content { width: 100%; border-radius: 30px 30px 0 0; }
-}
+/* CALENDRIER */
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.day-card { background: white; padding: 10px 5px; border-radius: 12px; min-height: 80px; }
