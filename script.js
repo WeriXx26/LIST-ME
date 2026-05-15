@@ -1,6 +1,6 @@
 let tasks = JSON.parse(localStorage.getItem('listme_tasks')) || [];
 let dailyTodo = JSON.parse(localStorage.getItem('listme_todo')) || [];
-let weeklyTodo = JSON.parse(localStorage.getItem('listme_weekly')) || []; // Nouveau stockage Hebdo
+let weeklyTodo = JSON.parse(localStorage.getItem('listme_weekly')) || [];
 let currentTheme = localStorage.getItem('listme_theme') || 'pink';
 let viewState = 'day'; 
 let todoMode = 'daily';
@@ -12,7 +12,7 @@ const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juil
 const dayInitials = ["D", "L", "M", "M", "J", "V", "S"];
 const dayNamesFr = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 const todayStr = new Date().toISOString().split('T')[0];
-const currentDayOfWeek = new Date().getDay(); // 0 = Dimanche, 1 = Lundi...
+const currentDayOfWeek = new Date().getDay();
 
 document.body.className = `theme-${currentTheme}`;
 
@@ -135,14 +135,8 @@ function renderTodo() {
         
         for (let h = 8; h <= 20; h++) {
             const time = `${h.toString().padStart(2, '0')}:00`;
-            
-            // 1. Filtrer les tâches créées spécifiquement pour aujourd'hui
             let items = dailyTodo.filter(it => it.date === todayStr && it.time === time);
-            
-            // 2. MAGIE DE LA RÉPERCUSSION : Récupérer aussi les tâches prévues pour ce JOUR DE LA SEMAINE dans l'Hebdo
             let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && it.time === time);
-            
-            // On fusionne les deux types de tâches pour l'affichage du jour J
             let combinedItems = [...items, ...weeklyItems];
 
             sc.innerHTML += `
@@ -151,7 +145,6 @@ function renderTodo() {
                     <div class="slot-content">
                         <div style="flex:1; cursor:pointer;" onclick="openTodoModal('${time}', false)">
                             ${combinedItems.map(it => {
-                                // Détecter si c'est une tâche hebdo pour utiliser sa fonction de check dédiée
                                 const isWeekly = it.hasOwnProperty('dayOfWeek');
                                 const checkFunc = isWeekly ? `toggleWeeklyTodo(${it.id})` : `toggleTodo(${it.id})`;
                                 return `<div onclick="event.stopPropagation(); ${checkFunc}">${it.completed ? '✓' : '○'} ${it.name} <span style="font-size:0.7rem; opacity:0.5;">${isWeekly ? '(Hebdo)' : ''}</span></div>`;
@@ -162,12 +155,9 @@ function renderTodo() {
                 </div>`;
         }
     } else {
-        // AFFICHAGE DE L'ONGLET HEBDO (Les jours de la semaine empilés)
         document.getElementById('todo-today-date').innerText = "Planification Hebdomadaire";
         c.innerHTML = '<div class="weekly-container"></div>';
         const wc = c.querySelector('.weekly-container');
-        
-        // Ordre d'affichage : Lundi (1) à Dimanche (0)
         const weeklyOrder = [1, 2, 3, 4, 5, 6, 0];
         
         weeklyOrder.forEach(dayNum => {
@@ -201,12 +191,11 @@ function openTodoModal(time, isWeekly, dayNum = 1) {
     document.getElementById('todo-time').value = time;
     const selector = document.getElementById('todo-day-selector-block');
     if(isWeekly) {
-        selector.style.display = 'flex';
+        selector.style.display = 'none'; // Dissimulé, car le jour est sélectionné automatiquement en tâche de fond !
         document.getElementById('todo-day-select').value = dayNum;
     } else {
         selector.style.display = 'none';
     }
-    // Sauvegarder l'état sur le bouton enregistrer
     document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly);
     document.getElementById('todo-modal').style.display = 'flex'; 
 }
