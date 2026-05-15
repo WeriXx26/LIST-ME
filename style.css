@@ -1,3 +1,4 @@
+/* --- 1. POLICE --- */
 @font-face {
     font-family: 'Mogra';
     src: url('Mogra.ttf') format('truetype');
@@ -5,11 +6,12 @@
     font-style: normal;
 }
 
+/* --- 2. VARIABLES --- */
 :root {
     --primary: #00CED1;
     --primary-dark: #008B8B;
-    --bg-pink: #FAD0C4; /* Rose beaucoup plus doux */
-    --slash-color: rgba(255, 255, 255, 0.3);
+    --bg-pink: #FFC0CB; /* Rose doux */
+    --line-color: rgba(255, 255, 255, 0.4);
     --text: #2C3E50;
     --danger: #FF4757;
     --warning: #FFA502;
@@ -20,18 +22,16 @@
 
 body { 
     font-family: -apple-system, sans-serif; 
-    background-color: var(--bg-pink);
-    /* Effet rayures entrecoupées */
-    background-image: 
-        linear-gradient(45deg, var(--slash-color) 25%, transparent 25%),
-        linear-gradient(-45deg, var(--slash-color) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, var(--slash-color) 75%),
-        linear-gradient(-45deg, transparent 75%, var(--slash-color) 75%);
-    background-size: 60px 60px;
-    background-attachment: fixed;
     margin: 0; 
     color: var(--text); 
     min-height: 100vh;
+    /* EFFET RAYURES ENTRECOUPÉES (SKETCH) */
+    background-color: var(--bg-pink);
+    background-image: 
+        linear-gradient(45deg, var(--line-color) 25%, transparent 25%, transparent 50%, var(--line-color) 50%, var(--line-color) 75%, transparent 75%, transparent),
+        linear-gradient(45deg, transparent 37%, var(--line-color) 37%, var(--line-color) 38%, transparent 38%, transparent 62%, var(--line-color) 62%, var(--line-color) 63%, transparent 63%);
+    background-size: 80px 80px, 120px 120px; /* Tailles différentes pour l'aspect aléatoire */
+    background-attachment: fixed;
 }
 
 .navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label {
@@ -39,62 +39,76 @@ body {
     font-weight: normal;
 }
 
-/* NAVBAR */
+/* --- 3. NAVBAR (Correction des clics) --- */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; 
     padding: 15px; 
-    display: flex; justify-content: space-between; align-items: center;
-    position: sticky; top: 0; z-index: 1000;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    position: sticky; 
+    top: 0; 
+    z-index: 9999; /* Très haut pour être sûr de cliquer */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.nav-links { display: flex; gap: 8px; }
+.nav-links { display: flex; gap: 5px; position: relative; z-index: 10000; }
 .nav-links button { 
-    background: rgba(255,255,255,0.2); border: none; color: white; 
-    padding: 8px 12px; border-radius: 20px; font-size: 0.7rem;
+    background: rgba(255,255,255,0.2); 
+    border: none; 
+    color: white; 
+    padding: 8px 12px; 
+    border-radius: 20px; 
+    font-size: 0.75rem; 
+    cursor: pointer;
+    font-weight: bold;
 }
 
-main { padding: 20px 15px; max-width: 600px; margin: auto; }
+main { padding: 20px 15px; max-width: 600px; margin: auto; position: relative; z-index: 1; }
 
-/* CARTES TACHES */
+/* --- 4. CARTES ET BULLES --- */
+.header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+
 .task-card { 
-    background: white; padding: 20px; margin-bottom: 20px; /* Plus d'espace */
-    border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
+    background: white; 
+    padding: 20px; 
+    margin-bottom: 25px; /* Plus d'espace entre les bulles */
+    border-radius: 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border-left: 12px solid #ccc; /* Bordure par défaut */
 }
-/* IMPORTANT : Correction de l'affichage des couleurs */
-.task-card.high { border-left: 12px solid var(--danger); }
-.task-card.medium { border-left: 12px solid var(--warning); }
-.task-card.low { border-left: 12px solid var(--success); }
 
-/* TO-DO LIST (Heures) */
+/* Couleurs importance (RETOUR) */
+.task-card.high { border-left-color: var(--danger); }
+.task-card.medium { border-left-color: var(--warning); }
+.task-card.low { border-left-color: var(--success); }
+
+/* --- 5. TO-DO LIST --- */
 .calendar-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
 .bubble { 
     background: white; border: none; padding: 12px 20px; border-radius: 30px; 
-    color: var(--primary-dark); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    color: var(--primary-dark); box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
 }
 .bubble.active { background: var(--primary); color: white; }
 
-.schedule-container { background: white; border-radius: 25px; overflow: hidden; }
+.schedule-container { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
 .time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 70px; }
 .time-label { 
-    width: 80px; font-size: 1.1rem; /* Plus gros */
-    display: flex; align-items: center; justify-content: center;
-    background: #f9f9f9; color: var(--primary-dark); border-right: 2px solid #eee;
+    width: 80px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+    background: #fdfdfd; color: var(--primary-dark); border-right: 2px solid #eee;
 }
 .slot-content { flex: 1; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
 
-/* MODALS (Correction capture 2,3,4) */
+/* --- 6. MODALS --- */
 .modal { 
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; 
+    background: rgba(0,0,0,0.6); z-index: 11000; align-items: flex-end; 
 }
 .modal-content { 
     background: white; width: 100%; padding: 30px; 
     border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 20px; 
 }
-.modal-buttons { display: flex; gap: 10px; }
-
-/* CALENDRIER */
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-.day-card { background: white; padding: 10px 5px; border-radius: 12px; min-height: 80px; }
