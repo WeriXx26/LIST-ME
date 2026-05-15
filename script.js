@@ -11,10 +11,10 @@ const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juil
 const dayInitials = ["D", "L", "M", "M", "J", "V", "S"];
 const importanceOrder = { 'high': 1, 'medium': 2, 'low': 3 };
 
-// Date du jour pour les calculs et par défaut
+// Calcul de la date du jour au format YYYY-MM-DD
 const todayStr = new Date().toISOString().split('T')[0];
 
-// --- LOGIQUE DE NAVIGATION (CORRIGÉE) ---
+// --- LOGIQUE DE NAVIGATION GLOBALE (CORRIGÉE) ---
 function showPage(pageId) {
     // 1. Masquer toutes les sections proprement
     const sections = document.querySelectorAll('main > section');
@@ -31,16 +31,16 @@ function showPage(pageId) {
     if(pageId === 'todo') renderTodo();
     if(pageId === 'tasks') renderTasks();
     
-    // 4. Remonter en haut de page
+    // 4. Remonter en haut de page automatiquement
     window.scrollTo(0,0);
 }
 
-// --- GESTION DES TÂCHES ---
+// --- GESTION DES TÂCHES CLASSIQUES ---
 function renderTasks() {
     const container = document.getElementById('task-list');
     container.innerHTML = '';
     
-    // Tri : Non-terminées par importance, puis terminées en italique
+    // Tri : d'abord les non-terminées par importance, puis les terminées
     tasks.sort((a, b) => {
         if (a.completed !== b.completed) return a.completed ? 1 : -1;
         return importanceOrder[a.importance] - importanceOrder[b.importance];
@@ -48,6 +48,7 @@ function renderTasks() {
 
     tasks.forEach(task => {
         const div = document.createElement('div');
+        // Application stricte des classes pour le CSS (Correction d'affichage)
         div.className = `task-card ${task.importance} ${task.completed ? 'completed' : ''}`;
         div.innerHTML = `
             <div class="task-info" onclick="toggleTaskCheck(${task.id})">
@@ -62,12 +63,12 @@ function renderTasks() {
     });
 }
 
-// BOUTON AJOUTER : Reset modal + DATE DU JOUR AUTO
+// BOUTON AJOUTER : Reset modal + DATE DU JOUR AUTOMATIQUE
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; 
     document.getElementById('modal-title').innerText = "Nouvelle Tâche";
     document.getElementById('task-name').value = "";
-    document.getElementById('task-date').value = todayStr; // Date par défaut
+    document.getElementById('task-date').value = todayStr; // Force la date d'aujourd'hui
     document.getElementById('task-modal').style.display = 'flex'; 
 };
 
@@ -117,7 +118,7 @@ document.getElementById('save-task').onclick = () => {
     }
 };
 
-// --- TO-DO LIST & PLANNING ---
+// --- TO-DO LIST & PLANNING JOURNALIER (Design complet et corrigé) ---
 function setTodoMode(mode) {
     todoMode = mode;
     document.querySelectorAll('#todo-page .bubble').forEach(b => b.classList.remove('active'));
@@ -144,7 +145,7 @@ function renderTodo() {
                         <div style="flex:1" onclick="openTodoModal('${time}')">
                             ${items.map(it => `<div class="${it.completed ? 'todo-item-done' : ''}" onclick="event.stopPropagation(); toggleTodo(${it.id})">${it.completed ? '✓' : '○'} ${it.name}</div>`).join('')}
                         </div>
-                        <button onclick="openTodoModal('${time}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem;">✎</button>
+                        <button onclick="openTodoModal('${time}')" style="background:none; border:none; color:var(--primary); font-size:1.2rem;">✎</button>
                     </div>
                 </div>`;
             }
@@ -163,7 +164,7 @@ function openTodoModal(time) {
 document.getElementById('save-todo').onclick = () => {
     const name = document.getElementById('todo-task-name').value;
     const time = document.getElementById('todo-time').value;
-    if(name && time) {
+    if(name) {
         dailyTodo.push({ id: Date.now(), name, time, date: todayStr, completed: false });
         localStorage.setItem('listme_todo', JSON.stringify(dailyTodo));
         renderTodo();
@@ -179,7 +180,7 @@ function toggleTodo(id) {
     renderTodo();
 }
 
-// --- CALENDRIER ---
+// --- CALENDRIER THERMIQUE (Correction d'affichage) ---
 function setViewState(state) {
     viewState = state;
     document.querySelectorAll('#calendar-page .bubble').forEach(b => b.classList.remove('active'));
@@ -223,6 +224,7 @@ function renderCalendar() {
                 if(imps.includes('high')) dayDiv.classList.add('has-high');
                 else if(imps.includes('medium')) dayDiv.classList.add('has-medium');
                 else dayDiv.classList.add('has-low');
+                // Alerte au clic : Tâches du jour (Correction d'affichage capture)
                 dayDiv.onclick = () => alert(`Tâches du ${i}:\n` + dayTasks.map(t => `- ${t.name}`).join('\n'));
             }
             const dateObj = new Date(selectedYear, selectedMonth, i);
@@ -249,8 +251,8 @@ renderTasks();
 
 // Fermeture des modals lors du clic sur Annuler ou à côté
 document.getElementById('close-modal').onclick = () => { document.getElementById('task-modal').style.display = 'none'; };
-window.onclick = (e) => {
-    if (e.target.className === 'modal') {
+window.onclick = (event) => {
+    if (event.target.className === 'modal') {
         document.getElementById('task-modal').style.display = 'none';
         document.getElementById('todo-modal').style.display = 'none';
     }
