@@ -1,149 +1,118 @@
-/* --- 2. VARIABLES COULEURS --- */
+/* --- 1. VARIABLES --- */
 :root {
-    --primary: #00CED1; /* Bleu Cyan/Turquoise électrique */
-    --primary-dark: #008B8B; 
-    --bg-pink: #FAD0C4; /* Rose beaucoup plus doux (pêche/rose) */
-    --line-color: rgba(255, 255, 255, 0.3); /* Ligne de rayure blanche transparente */
+    --primary: #00CED1;
+    --primary-dark: #008B8B;
+    --bg-pink: #FAD0C4; 
+    --line-color: rgba(255, 255, 255, 0.4);
     --text: #2C3E50;
-    --danger: #FF4757; 
-    --warning: #FFA502; 
+    --danger: #FF4757;
+    --warning: #FFA502;
     --success: #2ED573;
 }
 
-* { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: transparent; 
-}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body { 
     font-family: -apple-system, sans-serif; 
     margin: 0; 
     color: var(--text); 
     min-height: 100vh;
-    /* FOND ROSE PÊCHE AVEC RAYURES FINES ET ENTRE-COUPÉES (SKETCH) */
+    /* FOND ROSE AVEC RAYURES PLUS FINES (RÉDUITES DE MOITIÉ) */
     background-color: var(--bg-pink);
     background-image: 
         linear-gradient(45deg, var(--line-color) 25%, transparent 25%, transparent 50%, var(--line-color) 50%, var(--line-color) 75%, transparent 75%, transparent),
         linear-gradient(45deg, transparent 37%, var(--line-color) 37%, var(--line-color) 38%, transparent 38%, transparent 62%, var(--line-color) 62%, var(--line-color) 63%, transparent 63%);
-    background-size: 80px 80px, 120px 120px; /* Tailles différentes pour l'aspect entre-coupé */
+    background-size: 40px 40px, 60px 60px; /* Taille divisée par 2 pour la finesse */
     background-attachment: fixed;
 }
 
-/* Application de la police sur les titres, boutons et heures */
+/* Police Mogra via Google Fonts */
 .navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label {
     font-family: 'Mogra', cursive;
     font-weight: normal;
 }
 
-/* --- 3. BARRE DE NAVIGATION (Correction des clics) --- */
+/* --- 2. NAVBAR --- */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; 
     padding: 15px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    position: sticky; 
-    top: 0; 
-    z-index: 9999; /* z-index très élevé pour garantir les clics sur les onglets */
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 9999;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-.navbar h1 { font-size: 1.8rem; margin: 0; }
 
-/* Conteneur des onglets (Correction des clics) */
-.nav-links { display: flex; gap: 5px; position: relative; z-index: 10000; }
 .nav-links button { 
-    background: rgba(255,255,255,0.2); 
-    border: none; 
-    color: white; 
-    padding: 8px 12px; 
-    border-radius: 20px; 
-    font-size: 0.75rem; 
-    cursor: pointer;
-    font-weight: bold;
+    background: rgba(255,255,255,0.2); border: none; color: white; 
+    padding: 8px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;
 }
-.nav-links button:active { background: rgba(255,255,255,0.4); }
 
-main { padding: 20px 15px; max-width: 600px; margin: auto; position: relative; z-index: 1; }
+main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* --- 4. TÂCHES CLASSIQUES (Design complet et corrigé) --- */
-.header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-
-/* Bouton Ajouter réduit et arrondi */
+/* --- 3. BOUTON AJOUTER (RÉDUIT) --- */
 #add-task-btn { 
-    padding: 8px 15px; 
-    font-size: 0.8rem; 
-    border-radius: 20px; 
+    padding: 6px 12px; /* Taille réduite */
+    font-size: 0.75rem; 
+    border-radius: 15px; 
     border: none; 
     background: white; 
     color: var(--primary-dark); 
-    cursor: pointer; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+/* --- 4. TÂCHES --- */
+.header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
 
 .task-card { 
-    background: white; 
-    padding: 20px; 
-    margin-bottom: 25px; /* Plus d'espace vertical entre les bulles */
-    border-radius: 20px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+    background: white; padding: 20px; margin-bottom: 25px;
+    border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    border-left: 12px solid #ccc; /* Bordure par défaut */
+    border-left: 12px solid #ccc;
 }
-.task-info { flex: 1; cursor: pointer; }
-
-/* Couleurs de bordure selon l'importance (Correction d'affichage) */
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
 
-/* Style Complété : Gris + Italique (Correction d'affichage) */
 .completed { opacity: 0.5; border-left-color: #bdc3c7 !important; }
 .completed strong { text-decoration: line-through; font-style: italic; color: #7f8c8d; }
-.completed small { font-style: italic; }
 
-.task-actions { display: flex; gap: 15px; }
-.edit-btn { color: var(--primary); background: none; border: none; font-size: 1.3rem; }
-.delete-btn { color: var(--danger); background: none; border: none; font-size: 1.3rem; }
-
-/* --- 5. TO-DO LIST & PLANNING (Design complet et corrigé) --- */
+/* --- 5. TO-DO LIST --- */
 .calendar-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
-/* Bulles des onglets espacées */
 .bubble { 
-    background: white; border: none; padding: 12px 20px; border-radius: 30px; 
+    background: white; border: none; padding: 10px 15px; border-radius: 30px; 
     color: var(--primary-dark); box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
 }
 .bubble.active { background: var(--primary); color: white; }
 
-/* Conteneur du planning journalier */
 .schedule-container { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
 .time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 70px; }
-/* Étiquettes d'heures plus grandes et centrées */
 .time-label { 
-    width: 80px; font-size: 1.1rem; 
-    display: flex; align-items: center; justify-content: center;
+    width: 80px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
     background: #fdfdfd; color: var(--primary-dark); border-right: 2px solid #eee;
 }
-.slot-content { flex: 1; padding: 10px 15px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
-.todo-item-done { text-decoration: line-through; font-style: italic; color: #bdc3c7; }
+.slot-content { flex: 1; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
 
-/* --- 6. CALENDRIER THERMIQUE (Design complet et corrigé) --- */
-.calendar-title { text-align: center; font-size: 1.1rem; margin-bottom: 15px; color: var(--primary); }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #eee; border-radius: 8px; overflow: hidden; }
-.grid-years, .grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.grid-item { background: white; padding: 20px 10px; text-align: center; border-radius: 12px; font-weight: bold; cursor: pointer; }
-.grid-item.selected { background: var(--primary); color: white; }
+/* --- 6. CALENDRIER (FIXÉ) --- */
+.calendar-grid { 
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 8px; /* Plus d'espace entre les jours */
+}
+.grid-years, .grid-months { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px; 
+}
+.day-card { 
+    background: white; border-radius: 12px; padding: 10px 5px; 
+    min-height: 80px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.day-card.has-high { border-bottom: 4px solid var(--danger); background: #ffebeb; }
+.day-card.has-medium { border-bottom: 4px solid var(--warning); background: #fff8eb; }
+.day-card.has-low { border-bottom: 4px solid var(--success); background: #f0fbf0; }
 
-/* Carte des jours dans le calendrier */
-.day-card { background: white; min-height: 65px; padding: 5px; text-align: center; border: 1px solid #f0f0f0; cursor: pointer; }
-.day-card.has-high { background-color: #ffebeb; border-bottom: 3px solid var(--danger); }
-.day-card.has-medium { background-color: #fff8eb; border-bottom: 3px solid var(--warning); }
-.day-card.has-low { background-color: #f0fbf0; border-bottom: 3px solid var(--success); }
-.day-initial { display: block; font-size: 0.6rem; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
-
-/* --- 7. MODALS ET FENÊTRES (Correction des superpositions et clics) --- */
+/* --- 7. MODALS --- */
 .modal { 
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0,0,0,0.6); z-index: 11000; align-items: flex-end; 
@@ -152,10 +121,3 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; position: relative; z
     background: white; width: 100%; padding: 30px; 
     border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 20px; 
 }
-input, select { 
-    width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; background: #fdfdfd; 
-}
-label { font-size: 0.8rem; font-weight: bold; color: var(--secondary); margin-bottom: -10px; }
-.modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
-.btn-primary { flex: 2; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-.btn-secondary { flex: 1; background: #e9ecef; color: var(--secondary); border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
