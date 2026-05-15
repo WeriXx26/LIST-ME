@@ -104,6 +104,21 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
 .day-card { background: white; border-radius: 15px; padding: 10px 5px; min-height: 80px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 .day-card.has-high { border-bottom: 5px solid var(--danger); background: #ffebeb; }
+/* --- COULEURS THERMIQUES DU CALENDRIER --- */
+.day-card.has-high { 
+    border-bottom: 5px solid var(--danger); 
+    background: #ffebeb; 
+}
+
+.day-card.has-medium { 
+    border-bottom: 5px solid var(--warning); 
+    background: #fff8eb; 
+}
+
+.day-card.has-low { 
+    border-bottom: 5px solid var(--success); 
+    background: #f0fbf0; 
+}
 
 /* --- 7. MODALS (Screen 1 & 3) --- */
 .modal { 
