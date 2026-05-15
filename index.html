@@ -5,52 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4A90E2">
-    <title>LIST'ME</title>
     <link href="https://fonts.googleapis.com/css2?family=Mogra&display=swap" rel="stylesheet">
+    <title>LIST'ME</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-    <nav class="navbar">
+<body class="theme-pink"> <nav class="navbar">
         <h1>LIST'ME</h1>
         <div class="nav-links">
             <button onclick="showPage('tasks')">Tâches</button>
             <button onclick="showPage('todo')">To-Do List</button>
             <button onclick="showPage('calendar')">Calendrier</button>
             <button onclick="showPage('profile')">Profil</button>
-
-<section id="profile-page" style="display:none;">
-    <div class="header-action">
-        <h2>Mon Profil</h2>
-    </div>
-
-    <div class="profile-card">
-        <label>Adresse e-mail</label>
-        <input type="email" id="user-email" placeholder="votre@mail.com">
-        
-        <label>Mot de passe</label>
-        <input type="password" id="user-pass" placeholder="••••••••">
-        
-        <button class="btn-primary" style="margin-top: 10px;">Enregistrer les infos</button>
-    </div>
-
-    <div class="header-action" style="margin-top: 30px;">
-        <h2>Personnalisation</h2>
-    </div>
-
-    <div class="theme-selector">
-        <div class="theme-option pink" onclick="changeTheme('pink')">
-            <span>Bonbon</span>
-        </div>
-        <div class="theme-option dark" onclick="changeTheme('dark')">
-            <span>Sombre</span>
-        </div>
-        <div class="theme-option ocean" onclick="changeTheme('ocean')">
-            <span>Océan</span>
-        </div>
-    </div>
-</section>
         </div>
     </nav>
 
@@ -58,10 +23,9 @@
         <section id="tasks-page">
             <div class="header-action">
                 <h2>Mes Tâches</h2>
-                <button id="add-task-btn" class="btn-primary">Ajouter</button>
+                <button id="add-task-btn">Ajouter</button>
             </div>
-            <div id="task-list" class="list-container">
-                </div>
+            <div id="task-list"></div>
         </section>
 
         <section id="todo-page" style="display:none;">
@@ -69,9 +33,8 @@
                 <button id="btn-daily" class="bubble active" onclick="setTodoMode('daily')">Journalier</button>
                 <button id="btn-weekly" class="bubble" onclick="setTodoMode('weekly')">Hebdo</button>
             </div>
-            <h3 id="todo-today-date" style="text-align: center; color: var(--primary); margin-bottom: 20px;"></h3>
-            <div id="todo-content">
-                </div>
+            <h3 id="todo-today-date" style="text-align: center; margin-bottom: 20px;"></h3>
+            <div id="todo-content"></div>
         </section>
 
         <section id="calendar-page" style="display:none;">
@@ -80,10 +43,29 @@
                 <button id="btn-month" class="bubble" onclick="setViewState('month')">Mois</button>
                 <button id="btn-day" class="bubble active" onclick="setViewState('day')">Jours</button>
             </div>
-            <div id="calendar-title" class="calendar-title"></div>
-            <div class="calendar-wrapper">
-                <div id="calendar-content">
-                    </div>
+            <div id="calendar-title" class="calendar-title" style="text-align:center; margin-bottom:15px;"></div>
+            <div id="calendar-content"></div>
+        </section>
+
+        <section id="profile-page" style="display:none;">
+            <div class="header-action">
+                <h2>Mon Profil</h2>
+            </div>
+            <div class="profile-card">
+                <label>Adresse e-mail</label>
+                <input type="email" id="user-email" placeholder="votre@mail.com">
+                <label>Mot de passe</label>
+                <input type="password" id="user-pass" placeholder="••••••••">
+                <button class="btn-primary" style="margin-top: 10px;">Enregistrer</button>
+            </div>
+
+            <div class="header-action" style="margin-top: 30px;">
+                <h2>Thèmes</h2>
+            </div>
+            <div class="theme-selector">
+                <div class="theme-option pink" onclick="changeTheme('pink')">Bonbon</div>
+                <div class="theme-option dark" onclick="changeTheme('dark')">Sombre</div>
+                <div class="theme-option ocean" onclick="changeTheme('ocean')">Océan</div>
             </div>
         </section>
     </main>
@@ -91,15 +73,15 @@
     <div id="task-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Nouvelle Tâche</h3>
-            <label>Nom de la tâche</label>
-            <input type="text" id="task-name" placeholder="Ex: Appeler le garage...">
-            <label>Date d'échéance</label>
+            <label>Nom</label>
+            <input type="text" id="task-name">
+            <label>Date</label>
             <input type="date" id="task-date">
-            <label>Niveau d'importance</label>
+            <label>Importance</label>
             <select id="task-importance">
-                <option value="high">Haute Importance</option>
-                <option value="medium">Moyenne Importance</option>
-                <option value="low">Faible Importance</option>
+                <option value="high">Haute</option>
+                <option value="medium">Moyenne</option>
+                <option value="low">Faible</option>
             </select>
             <div class="modal-buttons">
                 <button id="save-task" class="btn-primary">Enregistrer</button>
@@ -110,11 +92,9 @@
 
     <div id="todo-modal" class="modal">
         <div class="modal-content">
-            <h3>Ajouter au Planning</h3>
-            <label>Heure de la tâche</label>
+            <h3>Planning</h3>
             <input type="time" id="todo-time">
-            <label>Que devez-vous faire ?</label>
-            <input type="text" id="todo-task-name" placeholder="Ex: Séance de sport">
+            <input type="text" id="todo-task-name" placeholder="Tâche...">
             <div class="modal-buttons">
                 <button id="save-todo" class="btn-primary">Ajouter</button>
                 <button onclick="document.getElementById('todo-modal').style.display='none'" class="btn-secondary">Annuler</button>
