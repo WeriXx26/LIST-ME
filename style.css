@@ -1,4 +1,11 @@
-/* --- 1. VARIABLES & FOND --- */
+/* --- 1. CONFIGURATION DE BASE --- */
+@font-face {
+    font-family: 'Mogra';
+    src: url('Mogra.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     --primary: #00CED1;
     --primary-dark: #008B8B;
@@ -10,33 +17,31 @@
     --success: #2ED573;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
 body { 
     font-family: -apple-system, sans-serif; 
-    margin: 0; 
-    color: var(--text); 
-    min-height: 100vh;
     background-color: var(--bg-pink);
     background-image: 
         linear-gradient(45deg, var(--line-color) 25%, transparent 25%, transparent 50%, var(--line-color) 50%, var(--line-color) 75%, transparent 75%, transparent),
         linear-gradient(45deg, transparent 37%, var(--line-color) 37%, var(--line-color) 38%, transparent 38%, transparent 62%, var(--line-color) 62%, var(--line-color) 63%, transparent 63%);
     background-size: 40px 40px, 60px 60px;
     background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
 }
 
 .navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label {
     font-family: 'Mogra', cursive;
-    font-weight: normal;
 }
 
-/* --- 2. NAVBAR & NAVIGATION --- */
+/* --- 2. NAVIGATION --- */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;
     position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-.nav-links { display: flex; gap: 5px; }
+.nav-links { display: flex; gap: 8px; }
 .nav-links button { 
     background: rgba(255,255,255,0.2); border: none; color: white; 
     padding: 8px 12px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;
@@ -44,17 +49,13 @@ body {
 
 main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* --- 3. LA BULLE TRANSPARENTE (Header) --- */
+/* --- 3. EN-TÊTE (La Bulle Transparente) --- */
 .header-action { 
     display: flex; justify-content: space-between; align-items: center; 
-    margin-bottom: 30px; 
-    background: rgba(255, 255, 255, 0.3); /* Transparence */
-    padding: 15px 20px;
-    border-radius: 25px;
-    backdrop-filter: blur(8px); /* Effet flou */
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px; padding: 15px 20px; border-radius: 25px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 #add-task-btn { 
@@ -62,30 +63,41 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
     border: none; background: white; color: var(--primary-dark); cursor: pointer;
 }
 
-/* --- 4. TÂCHES --- */
+/* --- 4. LISTES ET TÂCHES --- */
 .task-card { 
-    background: white; padding: 20px; margin-bottom: 25px;
+    background: white; padding: 20px; margin-bottom: 20px;
     border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 12px solid #ccc;
 }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
-.completed { opacity: 0.5; border-left-color: #bdc3c7 !important; }
-.completed strong { text-decoration: line-through; font-style: italic; }
+.completed { opacity: 0.5; border-left-color: #bdc3c7 !important; font-style: italic; }
 
-/* --- 5. CALENDRIER (Correction des grilles) --- */
-.calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 5px; }
-.grid-years, .grid-months { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px; }
+/* --- 5. CALENDRIER (Grilles Fixes) --- */
+.calendar-wrapper { width: 100%; margin-top: 15px; }
+
+/* Grille pour les Jours (7 colonnes) */
+.calendar-grid { 
+    display: grid !important; 
+    grid-template-columns: repeat(7, 1fr) !important; 
+    gap: 5px; 
+}
+
+/* Grille pour Années et Mois (3 colonnes) */
+.grid-years, .grid-months { 
+    display: grid !important; 
+    grid-template-columns: repeat(3, 1fr) !important; 
+    gap: 12px; 
+}
 
 .grid-item { 
-    background: white; padding: 15px 5px; text-align: center; border-radius: 15px; 
+    background: white; padding: 20px 5px; text-align: center; border-radius: 15px; 
     font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    display: flex; align-items: center; justify-content: center; min-height: 60px;
 }
 .grid-item.selected { background: var(--primary); color: white; }
 
-.day-card { background: white; border-radius: 12px; padding: 8px 2px; min-height: 75px; text-align: center; }
+.day-card { background: white; border-radius: 10px; padding: 10px 2px; min-height: 70px; text-align: center; border: 1px solid #f0f0f0; }
 .day-card.has-high { border-bottom: 4px solid var(--danger); background: #ffebeb; }
 .day-card.has-medium { border-bottom: 4px solid var(--warning); background: #fff8eb; }
 .day-card.has-low { border-bottom: 4px solid var(--success); background: #f0fbf0; }
