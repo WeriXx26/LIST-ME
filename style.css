@@ -1,11 +1,3 @@
-/* --- 1. POLICE --- */
-@font-face {
-    font-family: 'Mogra';
-    src: url('Mogra.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
 /* --- 2. VARIABLES COULEURS --- */
 :root {
     --primary: #00CED1; /* Bleu Cyan/Turquoise électrique */
