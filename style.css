@@ -1,143 +1,103 @@
-/* --- 1. CONFIGURATION ET POLICE --- */
-@font-face {
-    font-family: 'Mogra';
-    src: url('Mogra.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
+/* --- VARIABLES --- */
 :root {
     --primary: #00CED1;
     --primary-dark: #008B8B;
-    --bg-pink: #FAD0C4; 
-    --line-color: rgba(255, 255, 255, 0.4);
-    --text: #2C3E50;
-    --danger: #FF4757; 
-    --warning: #FFA502; 
-    --success: #2ED573;
+    --danger: #FF4757; --warning: #FFA502; --success: #2ED573;
+}
+
+/* THÈME ROSE (BONBON) */
+body.theme-pink {
+    --bg-main: #FAD0C4;
+    --bg-line: rgba(255, 255, 255, 0.4);
+    --card-bg: #ffffff;
+    --text-color: #2C3E50;
+}
+
+/* THÈME SOMBRE (NUANCES DE NOIR) */
+body.theme-dark {
+    --bg-main: #121212;
+    --bg-line: rgba(255, 255, 255, 0.05);
+    --card-bg: #1e1e1e;
+    --text-color: #ffffff;
+}
+
+/* THÈME OCÉAN (BLEU PROFOND) */
+body.theme-ocean {
+    --bg-main: #1a2a3a;
+    --bg-line: rgba(0, 206, 209, 0.1);
+    --card-bg: #2c3e50;
+    --text-color: #ecf0f1;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 
 body { 
     font-family: -apple-system, sans-serif; 
-    background-color: var(--bg-pink);
+    background-color: var(--bg-main);
     background-image: 
-        linear-gradient(45deg, var(--line-color) 25%, transparent 25%, transparent 50%, var(--line-color) 50%, var(--line-color) 75%, transparent 75%, transparent),
-        linear-gradient(45deg, transparent 37%, var(--line-color) 37%, var(--line-color) 38%, transparent 38%, transparent 62%, var(--line-color) 62%, var(--line-color) 63%, transparent 63%);
+        linear-gradient(45deg, var(--bg-line) 25%, transparent 25%, transparent 50%, var(--bg-line) 50%, var(--bg-line) 75%, transparent 75%, transparent),
+        linear-gradient(45deg, transparent 37%, var(--bg-line) 37%, var(--bg-line) 38%, transparent 38%, transparent 62%, var(--bg-line) 62%, var(--bg-line) 63%, transparent 63%);
     background-size: 40px 40px, 60px 60px;
     background-attachment: fixed;
-    min-height: 100vh;
+    color: var(--text-color);
+    transition: background 0.3s ease;
 }
 
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, label {
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, label, .theme-option {
     font-family: 'Mogra', cursive;
 }
 
-/* --- 2. BARRE DE NAVIGATION --- */
+/* NAVBAR */
 .navbar { 
     background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
     color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;
-    position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    position: sticky; top: 0; z-index: 9999;
 }
-.nav-links button { 
-    background: rgba(255,255,255,0.2); border: none; color: white; 
-    padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-left: 5px;
-}
+.nav-links button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
 
+/* BULLES & CARTES */
 main { padding: 20px 15px; max-width: 600px; margin: auto; }
-
-/* --- 3. BULLE EN-TÊTE (Comme sur Screen 1) --- */
 .header-action { 
     display: flex; justify-content: space-between; align-items: center; 
-    margin-bottom: 25px; padding: 15px 20px; border-radius: 25px;
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin-bottom: 20px; padding: 15px 20px; border-radius: 25px;
+    background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#add-task-btn { 
-    padding: 8px 16px; border-radius: 20px; border: none; 
-    background: white; color: var(--primary-dark); cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.task-card, .profile-card, .schedule-container, .grid-item, .day-card, .modal-content { 
+    background: var(--card-bg); color: var(--text-color);
+    border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* --- 4. TÂCHES ET CARTES --- */
-.task-card { 
-    background: white; padding: 20px; margin-bottom: 20px;
-    border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 12px solid #ccc;
-}
+.task-card { padding: 20px; margin-bottom: 20px; border-left: 10px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
 
-/* --- 5. TO-DO LIST (Heures et Boutons Screen 2) --- */
-.calendar-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
-.bubble { 
-    background: white; border: none; padding: 10px 20px; border-radius: 30px; 
-    color: var(--primary-dark); box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
-}
-.bubble.active { background: var(--primary); color: white; }
-
-.schedule-container { 
-    background: white; border-radius: 25px; overflow: hidden; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-}
-.time-slot { display: flex; border-bottom: 1px solid #f0f0f0; min-height: 75px; }
-.time-label { 
-    width: 85px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-    background: #fdfdfd; color: var(--primary-dark); border-right: 2px solid #eee;
-}
+/* PLANNING & CALENDRIER */
+.time-slot { display: flex; border-bottom: 1px solid rgba(128,128,128,0.1); min-height: 70px; }
+.time-label { width: 70px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border-right: 1px solid rgba(128,128,128,0.1); }
 .slot-content { flex: 1; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
 
-/* --- 6. CALENDRIER (Grilles Screen 3) --- */
-.calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
-.grid-years, .grid-months { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.grid-years, .grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid-item { padding: 20px 5px; text-align: center; }
+.day-card { padding: 10px 2px; min-height: 70px; text-align: center; }
+.day-card.has-high { border-bottom: 4px solid var(--danger); }
+.day-card.has-medium { border-bottom: 4px solid var(--warning); }
+.day-card.has-low { border-bottom: 4px solid var(--success); }
 
-.grid-item { 
-    background: white; padding: 20px 5px; text-align: center; border-radius: 20px; 
-    font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-.grid-item.selected { background: var(--primary); color: white; }
+/* PROFIL & THÈMES */
+.profile-card { padding: 25px; display: flex; flex-direction: column; gap: 10px; }
+.theme-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.theme-option { height: 80px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+.theme-option.pink { background: #FAD0C4; }
+.theme-option.dark { background: #1a1a1a; }
+.theme-option.ocean { background: #1a2a3a; border: 1px solid var(--primary); }
 
-.day-card { background: white; border-radius: 15px; padding: 10px 5px; min-height: 80px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-.day-card.has-high { border-bottom: 5px solid var(--danger); background: #ffebeb; }
-/* --- COULEURS THERMIQUES DU CALENDRIER --- */
-.day-card.has-high { 
-    border-bottom: 5px solid var(--danger); 
-    background: #ffebeb; 
-}
-
-.day-card.has-medium { 
-    border-bottom: 5px solid var(--warning); 
-    background: #fff8eb; 
-}
-
-.day-card.has-low { 
-    border-bottom: 5px solid var(--success); 
-    background: #f0fbf0; 
-}
-
-/* --- 7. MODALS (Screen 1 & 3) --- */
-.modal { 
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.6); z-index: 11000; align-items: flex-end; 
-}
-.modal-content { 
-    background: white; width: 100%; padding: 30px; 
-    border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; 
-}
-input, select { 
-    width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #eee; 
-    font-size: 1rem; background: #f9f9f9; outline: none;
-}
-.btn-primary { 
-    background: var(--primary); color: white; border: none; padding: 16px; 
-    border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
-}
-.btn-secondary { 
-    background: #edf2f7; color: #718096; border: none; padding: 16px; 
-    border-radius: 15px; font-weight: bold; cursor: pointer;
-}
+/* MODALS */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: flex-end; }
+.modal-content { width: 100%; padding: 30px; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; }
+input, select { padding: 12px; border-radius: 10px; border: 1px solid #444; background: rgba(128,128,128,0.1); color: inherit; }
+#add-task-btn, .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+.btn-secondary { background: #444; color: white; border: none; padding: 10px 15px; border-radius: 20px; }
