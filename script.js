@@ -1,4 +1,4 @@
-// --- INITIALISATION ---
+// --- INITIALISATION DES DONNÉES ---
 let tasks = JSON.parse(localStorage.getItem('listme_tasks')) || [];
 let dailyTodo = JSON.parse(localStorage.getItem('listme_todo')) || [];
 let viewState = 'day'; 
@@ -11,37 +11,36 @@ const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juil
 const dayInitials = ["D", "L", "M", "M", "J", "V", "S"];
 const importanceOrder = { 'high': 1, 'medium': 2, 'low': 3 };
 
-// Calcul de la date du jour au format YYYY-MM-DD
+// Date du jour pour les calculs et par défaut
 const todayStr = new Date().toISOString().split('T')[0];
 
-// --- REPORT AUTOMATIQUE ---
-function autoReport() {
-    let hasChanged = false;
-    dailyTodo.forEach(item => {
-        if (!item.completed && item.date < todayStr) {
-            item.date = todayStr;
-            hasChanged = true;
-        }
-    });
-    if (hasChanged) localStorage.setItem('listme_todo', JSON.stringify(dailyTodo));
-}
-autoReport();
-
-// --- NAVIGATION ---
+// --- LOGIQUE DE NAVIGATION (CORRIGÉE) ---
 function showPage(pageId) {
-    document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
-    document.getElementById(`${pageId}-page`).style.display = 'block';
+    // 1. Masquer toutes les sections proprement
+    const sections = document.querySelectorAll('main > section');
+    sections.forEach(s => s.style.display = 'none');
+    
+    // 2. Afficher la section cible
+    const target = document.getElementById(`${pageId}-page`);
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    // 3. Charger le contenu spécifique
     if(pageId === 'calendar') renderCalendar();
     if(pageId === 'todo') renderTodo();
     if(pageId === 'tasks') renderTasks();
+    
+    // 4. Remonter en haut de page
+    window.scrollTo(0,0);
 }
 
-// --- PAGE TÂCHES (Correction Couleurs & Tri) ---
+// --- GESTION DES TÂCHES ---
 function renderTasks() {
     const container = document.getElementById('task-list');
     container.innerHTML = '';
     
-    // Tri : Non-complétées d'abord (par importance), puis complétées
+    // Tri : Non-terminées par importance, puis terminées en italique
     tasks.sort((a, b) => {
         if (a.completed !== b.completed) return a.completed ? 1 : -1;
         return importanceOrder[a.importance] - importanceOrder[b.importance];
@@ -49,7 +48,6 @@ function renderTasks() {
 
     tasks.forEach(task => {
         const div = document.createElement('div');
-        // Application stricte des classes d'importance pour le CSS
         div.className = `task-card ${task.importance} ${task.completed ? 'completed' : ''}`;
         div.innerHTML = `
             <div class="task-info" onclick="toggleTaskCheck(${task.id})">
@@ -64,18 +62,28 @@ function renderTasks() {
     });
 }
 
-// Ouvrir modal avec DATE DU JOUR PAR DÉFAUT
+// BOUTON AJOUTER : Reset modal + DATE DU JOUR AUTO
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; 
     document.getElementById('modal-title').innerText = "Nouvelle Tâche";
     document.getElementById('task-name').value = "";
-    document.getElementById('task-date').value = todayStr; // Date du jour
+    document.getElementById('task-date').value = todayStr; // Date par défaut
     document.getElementById('task-modal').style.display = 'flex'; 
 };
+
+function saveTasks() {
+    localStorage.setItem('listme_tasks', JSON.stringify(tasks));
+    renderTasks();
+}
 
 function toggleTaskCheck(id) {
     const idx = tasks.findIndex(t => t.id === id);
     tasks[idx].completed = !tasks[idx].completed;
+    saveTasks();
+}
+
+function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
     saveTasks();
 }
 
@@ -89,16 +97,6 @@ function editTask(id) {
         document.getElementById('modal-title').innerText = "Modifier la tâche";
         document.getElementById('task-modal').style.display = 'flex';
     }
-}
-
-function deleteTask(id) {
-    tasks = tasks.filter(t => t.id !== id);
-    saveTasks();
-}
-
-function saveTasks() {
-    localStorage.setItem('listme_tasks', JSON.stringify(tasks));
-    renderTasks();
 }
 
 document.getElementById('save-task').onclick = () => {
@@ -119,7 +117,7 @@ document.getElementById('save-task').onclick = () => {
     }
 };
 
-// --- TO-DO LIST (Planning Journalier) ---
+// --- TO-DO LIST & PLANNING ---
 function setTodoMode(mode) {
     todoMode = mode;
     document.querySelectorAll('#todo-page .bubble').forEach(b => b.classList.remove('active'));
@@ -130,3 +128,130 @@ function setTodoMode(mode) {
 function renderTodo() {
     const content = document.getElementById('todo-content');
     const dateTitle = document.getElementById('todo-today-date');
+    if(dateTitle) dateTitle.innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
+    
+    content.innerHTML = '';
+    if(todoMode === 'daily') {
+        let html = '<div class="schedule-container">';
+        for (let h = 8; h <= 20; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                const items = dailyTodo.filter(t => t.date === todayStr && t.time === time);
+                html += `
+                <div class="time-slot">
+                    <div class="time-label">${time}</div>
+                    <div class="slot-content">
+                        <div style="flex:1" onclick="openTodoModal('${time}')">
+                            ${items.map(it => `<div class="${it.completed ? 'todo-item-done' : ''}" onclick="event.stopPropagation(); toggleTodo(${it.id})">${it.completed ? '✓' : '○'} ${it.name}</div>`).join('')}
+                        </div>
+                        <button onclick="openTodoModal('${time}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem;">✎</button>
+                    </div>
+                </div>`;
+            }
+        }
+        content.innerHTML = html + '</div>';
+    } else {
+        content.innerHTML = '<p style="text-align:center; padding:50px; font-family:Mogra;">Vue Hebdo bientôt disponible !</p>';
+    }
+}
+
+function openTodoModal(time) {
+    document.getElementById('todo-time').value = time;
+    document.getElementById('todo-modal').style.display = 'flex';
+}
+
+document.getElementById('save-todo').onclick = () => {
+    const name = document.getElementById('todo-task-name').value;
+    const time = document.getElementById('todo-time').value;
+    if(name && time) {
+        dailyTodo.push({ id: Date.now(), name, time, date: todayStr, completed: false });
+        localStorage.setItem('listme_todo', JSON.stringify(dailyTodo));
+        renderTodo();
+        document.getElementById('todo-modal').style.display = 'none';
+        document.getElementById('todo-task-name').value = '';
+    }
+};
+
+function toggleTodo(id) {
+    const idx = dailyTodo.findIndex(t => t.id === id);
+    dailyTodo[idx].completed = !dailyTodo[idx].completed;
+    localStorage.setItem('listme_todo', JSON.stringify(dailyTodo));
+    renderTodo();
+}
+
+// --- CALENDRIER ---
+function setViewState(state) {
+    viewState = state;
+    document.querySelectorAll('#calendar-page .bubble').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${state}`).classList.add('active');
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const content = document.getElementById('calendar-content');
+    const title = document.getElementById('calendar-title');
+    content.innerHTML = '';
+    if (viewState === 'year') {
+        content.className = 'grid-years';
+        for (let i = selectedYear - 5; i <= selectedYear + 3; i++) {
+            const div = document.createElement('div');
+            div.className = `grid-item ${i === selectedYear ? 'selected' : ''}`;
+            div.innerText = i;
+            div.onclick = () => { selectedYear = i; setViewState('month'); };
+            content.appendChild(div);
+        }
+    } else if (viewState === 'month') {
+        content.className = 'grid-months';
+        monthNames.forEach((name, index) => {
+            const div = document.createElement('div');
+            div.className = `grid-item ${index === selectedMonth ? 'selected' : ''}`;
+            div.innerText = name;
+            div.onclick = () => { selectedMonth = index; setViewState('day'); };
+            content.appendChild(div);
+        });
+    } else {
+        title.innerText = `${monthNames[selectedMonth]} ${selectedYear}`;
+        content.className = 'calendar-grid';
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day-card';
+            const dayTasks = tasks.filter(t => t.date === dateStr);
+            if(dayTasks.length > 0) {
+                const imps = dayTasks.map(t => t.importance);
+                if(imps.includes('high')) dayDiv.classList.add('has-high');
+                else if(imps.includes('medium')) dayDiv.classList.add('has-medium');
+                else dayDiv.classList.add('has-low');
+                dayDiv.onclick = () => alert(`Tâches du ${i}:\n` + dayTasks.map(t => `- ${t.name}`).join('\n'));
+            }
+            const dateObj = new Date(selectedYear, selectedMonth, i);
+            dayDiv.innerHTML = `<span class="day-initial">${dayInitials[dateObj.getDay()]}</span><b>${i}</b>`;
+            content.appendChild(dayDiv);
+        }
+    }
+}
+
+// --- INITIALISATION AU CHARGEMENT ---
+function autoReport() {
+    let hasChanged = false;
+    dailyTodo.forEach(item => {
+        if (!item.completed && item.date < todayStr) {
+            item.date = todayStr;
+            hasChanged = true;
+        }
+    });
+    if (hasChanged) localStorage.setItem('listme_todo', JSON.stringify(dailyTodo));
+}
+
+autoReport();
+renderTasks();
+
+// Fermeture des modals lors du clic sur Annuler ou à côté
+document.getElementById('close-modal').onclick = () => { document.getElementById('task-modal').style.display = 'none'; };
+window.onclick = (e) => {
+    if (e.target.className === 'modal') {
+        document.getElementById('task-modal').style.display = 'none';
+        document.getElementById('todo-modal').style.display = 'none';
+    }
+};
