@@ -40,7 +40,7 @@ const currentDayOfWeek = new Date().getDay();
 
 document.body.className = `theme-${currentTheme}`;
 
-// --- BULLE DE NOTIFICATION TOAST INTERNE ---
+// --- BULLE DE NOTIFICATION TOAST ---
 function showToast(message) {
     const toast = document.getElementById('toast-notification');
     if (!toast) return;
@@ -85,14 +85,12 @@ function switchTaskSubView(view) {
 // --- MOTEUR DE VÉRIFICATION EN CONTINU ---
 function runNotificationEngine() {
     const now = new Date();
+    if(document.getElementById('tasks-page').style.display === 'block') { renderTasks(); }
+
     const todayString = now.toISOString().split('T')[0];
     const hour = now.getHours();
     const minute = now.getMinutes();
     const dayOfWeek = now.getDay();
-
-    if(document.getElementById('tasks-page').style.display === 'block') {
-        renderTasks();
-    }
 
     if (dayOfWeek === 0 && hour === 18 && minute === 0) {
         const key = `recap-${todayString}`;
@@ -141,6 +139,7 @@ function runNotificationEngine() {
         }
     });
 }
+let lastCheckedMinute = "";
 setInterval(runNotificationEngine, 30000);
 
 function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission(); } }
@@ -163,16 +162,16 @@ auth.onAuthStateChanged((user) => {
             if (doc.exists && doc.data().nickname) {
                 userNickname = doc.data().nickname;
                 document.getElementById('profile-nickname').value = userNickname;
-                document.getElementById('app-logo-title').innerText = `LIST'ME - ${userNickname}`;
             } else {
-                userNickname = ""; document.getElementById('app-logo-title').innerText = "LIST'ME";
+                userNickname = ""; 
             }
+            // Le logo reste "LIST'ME" en haut, on ne change plus le innerText de l'en-tête
             startRealtimeSync(user.uid); 
             showPage('tasks');
         }).catch(() => { startRealtimeSync(user.uid); showPage('tasks'); });
     } else {
         currentUser = null; userNickname = ""; hasShownWelcomeThisSession = false;
-        document.getElementById('main-nav').style.display = 'none'; document.getElementById('app-logo-title').innerText = "LIST'ME";
+        document.getElementById('main-nav').style.display = 'none';
         stopRealtimeSync();
         document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
         document.getElementById('auth-page').style.display = 'block';
@@ -184,7 +183,6 @@ document.getElementById('btn-save-nickname').onclick = () => {
     if (nick && currentUser) {
         db.collection("users").doc(currentUser.uid).set({ nickname: nick }, { merge: true }).then(() => {
             userNickname = nick; 
-            document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`; 
             showToast("Surnom enregistré avec succès ! ✨");
         });
     }
@@ -317,7 +315,7 @@ document.getElementById('save-task').onclick = () => {
     }
 };
 
-// --- ONTLET : CONNEXIONS ---
+// --- AUTHENTIFICATION BOUTONS ---
 document.getElementById('btn-login').onclick = () => {
     const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
     if(email && pass) auth.signInWithEmailAndPassword(email, pass).then(() => { showToast("Ravi de vous revoir ! 👋"); }).catch(err => showToast("Erreur : " + err.message));
@@ -405,7 +403,16 @@ function renderTodo() {
                 <div class="weekly-subtasks">
                     ${combinedItems.map(it => {
                         const isWeekly = it.hasOwnProperty('dayOfWeek'); const checkFunc = isWeekly ? `toggleWeeklyTodo('${it.id}', ${it.completed})` : `toggleTodo('${it.id}', ${it.completed})`; const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')` : `deleteDailyTodo('${it.id}')`;
-                        return `<div class="weekly-item"><span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}"><b>${it.time}</b> : ${it.name} ${isWeekly ? '<small style="opacity:0.5;">(Hebdo)</small>':''}</span><div><button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', ${isWeekly}, ${isWeekly ? it.dayOfWeek : 0})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button><button onclick="${delFunc}" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button></div></div>`;
+                        return `
+                            <div class="weekly-item">
+                                <span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; font-style:italic; opacity:0.5;' : ''}">
+                                    <b>${it.time}</b> : ${it.name} ${isWeekly ? '<small style="opacity:0.5;">(Hebdo)</small>':''}
+                                </span>
+                                <div>
+                                    <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', ${isWeekly}, ${isWeekly ? it.dayOfWeek : 0})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button>
+                                    <button onclick="${delFunc}" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button>
+                                </div>
+                            </div>`;
                     }).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucun événement</span>'}
                 </div>`;
             wc.appendChild(hourCard);
@@ -424,15 +431,24 @@ function renderTodo() {
                     <button onclick="openTodoModal('12:00', true, ${dayNum})" style="background:var(--primary); border:none; color:white; border-radius:50%; width:25px; height:25px; font-weight:bold; cursor:pointer;">+</button>
                 </div>
                 <div class="weekly-subtasks">
-                    ${dayTasks.map(it => `<div class="weekly-item"><span onclick="toggleWeeklyTodo('${it.id}', ${it.completed})" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}"><b>${it.time}</b> : ${it.name}</span><div><button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button><button onclick="deleteWeeklyTodo('${it.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button></div></div>`).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucune activité planifiée</span>'}
+                    ${dayTasks.map(it => `
+                        <div class="weekly-item">
+                            <span onclick="toggleWeeklyTodo('${it.id}', ${it.completed})" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; font-style:italic; opacity:0.5;' : ''}">
+                                <b>${it.time}</b> : ${it.name}
+                            </span>
+                            <div>
+                                <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button>
+                                <button onclick="deleteWeeklyTodo('${it.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button>
+                            </div>
+                        </div>`).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucune activité planifiée</span>'}
                 </div>`;
             wc.appendChild(dayCard);
         });
     }
 }
 
-function openTodoModal(time, isWeekly, dayNum = 1) { editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = ''; document.getElementById('todo-modal-title').innerText = "Ajouter au planning"; if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; } document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
-function editTodoItem(id, name, time, isWeekly, dayNum = 1) { editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name; document.getElementById('todo-modal-title').innerText = "Modifier le planning"; if(isWeekly) document.getElementById('todo-day-select').value = dayNum; document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
+function openTodoModal(time, isWeekly, dayNum = 1) { editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = ''; document.getElementById('todo-modal-title').innerText = "Ajouter à la To-Do List"; if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; } document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
+function editTodoItem(id, name, time, isWeekly, dayNum = 1) { editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name; document.getElementById('todo-modal-title').innerText = "Modifier la To-Do List"; if(isWeekly) document.getElementById('todo-day-select').value = dayNum; document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
 
 // --- INITIALISATION GENERALE ---
 document.getElementById('add-task-btn').onclick = () => { editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; setSelectedRemindersToBadges([]); document.getElementById('task-date').value = todayStr; document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; };
