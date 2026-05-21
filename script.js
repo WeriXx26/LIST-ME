@@ -129,7 +129,7 @@ function runNotificationEngine() {
 }
 setInterval(runNotificationEngine, 30000);
 
-// --- COMPORTEMENT BADGES DE RAPPEL ---
+// --- BADGES DE RAPPEL ---
 document.querySelectorAll('.reminder-badge').forEach(badge => {
     badge.onclick = () => { badge.classList.toggle('active'); };
 });
@@ -156,7 +156,7 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('profile-user-email').innerText = user.email;
         requestNotificationPermission();
         
-        // CORRECTION MAJEURE : Chargement impératif et bloquant du surnom avant le reste
+        // FIX SURNOM : Lecture blindée déconnectée des snapshots de flux
         db.collection("users").doc(user.uid).get().then((doc) => {
             if (doc.exists && doc.data().nickname) {
                 userNickname = doc.data().nickname;
@@ -174,9 +174,7 @@ auth.onAuthStateChanged((user) => {
         });
 
     } else {
-        currentUser = null;
-        userNickname = "";
-        hasShownWelcomeThisSession = false; 
+        currentUser = null; userNickname = ""; hasShownWelcomeThisSession = false; 
         document.getElementById('main-nav').style.display = 'none';
         document.getElementById('app-logo-title').innerText = "LIST'ME";
         stopRealtimeSync();
@@ -202,14 +200,20 @@ document.getElementById('btn-save-nickname').onclick = () => {
 function startRealtimeSync(userId) {
     unsubscribeTasks = db.collection("tasks").where("userId", "==", userId)
         .onSnapshot((snapshot) => {
-            tasks = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; tasks.push(data); });
+            tasks = []; 
+            snapshot.forEach((doc) => { 
+                let data = doc.data(); 
+                data.id = doc.id; 
+                // Assurer un timestamp par défaut pour le tri par ajout si absent
+                if(!data.createdAt) { data.createdAt = Date.now(); } else if(data.createdAt.seconds) { data.createdAt = data.createdAt.seconds * 1000; }
+                tasks.push(data); 
+            });
             renderTasks(); 
             
             if (!hasShownWelcomeThisSession) {
                 triggerWelcomeModal();
                 hasShownWelcomeThisSession = true;
             }
-            
             if(viewState === 'day') renderCalendar();
         });
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId)
@@ -241,7 +245,7 @@ document.getElementById('btn-register').onclick = () => {
 document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut(); };
 
-// --- POP-UP CENTRÉ AUTOMATIQUE DE BIENVENUE ---
+// --- POP-UP BIENVENUE ---
 function triggerWelcomeModal() {
     const wModal = document.getElementById('welcome-modal');
     const msgText = document.getElementById('welcome-message-text');
@@ -255,7 +259,7 @@ function triggerWelcomeModal() {
     summaryZone.innerHTML = '';
     
     if(todayTasks.length === 0) {
-        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; margin-top: 10px; text-align:center;">Aucune tâche urgente pour aujourd'hui. Profite de ta journée ! ✨</p>`;
+        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; margin-top: 10px; text-align:center;">Aucune tâche urgente au programme pour aujourd'hui ! ✨</p>`;
     } else {
         summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: var(--primary-dark);">Voici tes tâches de la journée :</p>`;
         todayTasks.forEach(t => {
@@ -271,11 +275,36 @@ function triggerWelcomeModal() {
     wModal.style.display = 'flex';
 }
 
-// --- ONGLET : MES TÂCHES ---
+// --- ONGLET : MES TÂCHES (Mise à jour algorithme de tri et filtres) ---
 function renderTasks() {
     const c = document.getElementById('task-list'); if (!c) return; c.innerHTML = '';
-    tasks.sort((a,b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
-    tasks.forEach(t => {
+    const sortMode = document.getElementById('task-sort-filter').value;
+    
+    // Séparer les tâches accomplies (qui vont toujours en bas) et les tâches actives
+    let activeTasks = tasks.filter(t => !t.completed);
+    let completedTasks = tasks.filter(t => t.completed);
+
+    if (sortMode === 'chrono') {
+        // Tri Temporel (Du plus proche au plus éloigné)
+        // Les tâches sans heure sont placées en haut du jour J
+        const sortChronoFunc = (a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            if (!a.time) return -1; if (!b.time) return 1;
+            return a.time.localeCompare(b.time);
+        };
+        activeTasks.sort(sortChronoFunc);
+        completedTasks.sort(sortChronoFunc);
+    } else {
+        // Tri par date de création / d'ajout (De la plus récente à la plus ancienne)
+        const sortCreationFunc = (a, b) => b.createdAt - a.createdAt;
+        activeTasks.sort(sortCreationFunc);
+        completedTasks.sort(sortCreationFunc);
+    }
+
+    // Fusionner pour l'affichage final
+    let finalTasksList = [...activeTasks, ...completedTasks];
+
+    finalTasksList.forEach(t => {
         const d = document.createElement('div'); d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''}`;
         let remindersText = "Aucun";
         if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
@@ -314,7 +343,12 @@ document.getElementById('save-task').onclick = () => {
     if(n && d && currentUser) {
         let taskData = { name: n, date: d, time: time, reminders: reminders, importance: imp };
         if(editingId) { db.collection("tasks").doc(editingId).update(taskData); editingId = null; } 
-        else { taskData.completed = false; taskData.userId = currentUser.uid; db.collection("tasks").add(taskData); }
+        else { 
+            taskData.completed = false; 
+            taskData.userId = currentUser.uid; 
+            taskData.createdAt = Date.now(); // Enregistre la date exacte d'ajout numérique
+            db.collection("tasks").add(taskData); 
+        }
         document.getElementById('task-modal').style.display = 'none';
     }
 };
