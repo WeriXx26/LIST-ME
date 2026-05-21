@@ -53,90 +53,71 @@ function showPage(p) {
 }
 
 // --- MOTEUR DE NOTIFICATIONS D'ARRIÈRE-PLAN ---
-// Demande de permission au chargement
 function requestNotificationPermission() {
     if ("Notification" in window) {
-        Notification.requestPermission().then(permission => {
-            if (permission !== "granted") {
-                console.log("Notifications bloquées par l'utilisateur.");
-            }
-        });
+        Notification.requestPermission();
     }
 }
 
-// Fonction globale d'envoi de notification
 function sendNotification(title, body) {
     if ("Notification" in window && Notification.permission === "granted") {
         new Notification(title, {
             body: body,
-            icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" // Petite icône sympa de liste
+            icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png"
         });
     }
 }
 
-// Variables pour éviter les doublons de notifications dans la même minute
 let lastCheckedMinute = "";
 let heavyNotificationsSent = JSON.parse(localStorage.getItem('listme_sent_notifs')) || {};
 
 function runNotificationEngine() {
     const now = new Date();
     const currentMinuteStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
-    
     if (currentMinuteStr === lastCheckedMinute) return;
     lastCheckedMinute = currentMinuteStr;
 
     const todayString = now.toISOString().split('T')[0];
     const hour = now.getHours();
     const minute = now.getMinutes();
-    const dayOfWeek = now.getDay(); // 0 = Dimanche
+    const dayOfWeek = now.getDay();
 
-    // --- 1. NOTIFICATION AUTOMATIQUE : RECAP DU DIMANCHE (Ex: à 18:00) ---
     if (dayOfWeek === 0 && hour === 18 && minute === 0) {
         const key = `recap-${todayString}`;
         if (!heavyNotificationsSent[key]) {
             const activeTasksCount = tasks.filter(t => !t.completed).length;
-            if (activeTasksCount > 0) {
-                sendNotification("📋 LIST'ME : Récap de ta semaine", `Tu as ${activeTasksCount} tâches prévues au programme pour la semaine qui arrive. Courage !`);
-            } else {
-                sendNotification("📋 LIST'ME : Semaine tranquille !", "Aucune tâche critique de planifiée pour la semaine prochaine.");
-            }
+            sendNotification("📋 LIST'ME : Récap de ta semaine", activeTasksCount > 0 ? `Tu as ${activeTasksCount} tâches prévues cette semaine.` : "Aucune tâche critique de planifiée.");
             heavyNotificationsSent[key] = true;
             localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
         }
     }
 
-    // Boucle sur les tâches pour gérer la veille et le personnalisé
     tasks.forEach(t => {
         if (t.completed || !t.date) return;
-
         const taskDateObj = new Date(t.date);
         const diffTime = taskDateObj - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // --- 2. NOTIFICATION AUTOMATIQUE : LA VEILLE D'UNE TÂCHE (A 20:00 la veille) ---
         if (diffDays === 1 && hour === 20 && minute === 0) {
             const key = `veille-${t.id}`;
             if (!heavyNotificationsSent[key]) {
-                sendNotification("⏰ Rappel : C'est pour demain !", `Ne pas oublier la tâche : "${t.name}" prévue pour demain.`);
+                sendNotification("⏰ Rappel : C'est pour demain !", `Ne pas oublier : "${t.name}" prévu demain.`);
                 heavyNotificationsSent[key] = true;
                 localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
             }
         }
 
-        // --- 3. NOTIFICATION PERSONNALISÉE : MULTIPLES RAPPELS ---
         if (t.time && t.reminders && t.reminders.length > 0) {
             const [tHour, tMin] = t.time.split(':').map(Number);
             const taskDateTime = new Date(t.date);
             taskDateTime.setHours(tHour, tMin, 0, 0);
-
             const minutesRemaining = Math.round((taskDateTime - now) / 60000);
 
             t.reminders.forEach(reminderMinutes => {
                 if (minutesRemaining === Number(reminderMinutes)) {
                     const key = `custom-${t.id}-${reminderMinutes}`;
                     if (!heavyNotificationsSent[key]) {
-                        let text = reminderMinutes === 0 ? `C'est l'heure !` : `Commence dans ${reminderMinutes} minutes.`;
-                        sendNotification(`🔔 Rappel : ${t.name}`, text);
+                        sendNotification(`🔔 Rappel : ${t.name}`, reminderMinutes === 0 ? `C'est l'heure !` : `Commence dans ${reminderMinutes} minutes.`);
                         heavyNotificationsSent[key] = true;
                         localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
                     }
@@ -145,9 +126,33 @@ function runNotificationEngine() {
         }
     });
 }
-
-// Lancement du moteur d'arrière-plan (Vérification toutes les 30 secondes)
 setInterval(runNotificationEngine, 30000);
+
+// --- COMPORTEMENT DES BADGES DE RAPPEL TACTILES ---
+document.querySelectorAll('.reminder-badge').forEach(badge => {
+    badge.onclick = () => {
+        badge.classList.toggle('active');
+    };
+});
+
+function getSelectedRemindersFromBadges() {
+    let activeReminders = [];
+    document.querySelectorAll('.reminder-badge.active').forEach(badge => {
+        activeReminders.push(badge.getAttribute('data-value'));
+    });
+    return activeReminders;
+}
+
+function setSelectedRemindersToBadges(remindersArray) {
+    document.querySelectorAll('.reminder-badge').forEach(badge => {
+        const val = badge.getAttribute('data-value');
+        if(remindersArray && remindersArray.includes(val)) {
+            badge.classList.add('active');
+        } else {
+            badge.classList.remove('active');
+        }
+    });
+}
 
 // --- SURVEILLANCE DE L'ÉTAT DE CONNEXION ---
 auth.onAuthStateChanged((user) => {
@@ -155,94 +160,87 @@ auth.onAuthStateChanged((user) => {
         currentUser = user;
         document.getElementById('main-nav').style.display = 'flex';
         document.getElementById('profile-user-email').innerText = user.email;
-        requestNotificationPermission(); // Demander l'accès dès la connexion
+        requestNotificationPermission();
+        
+        // Charger le Surnom depuis Firebase s'il existe
+        db.collection("users").doc(user.uid).get().then((doc) => {
+            if (doc.exists && doc.data().nickname) {
+                const nick = doc.data().nickname;
+                document.getElementById('profile-nickname').value = nick;
+                document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`;
+            } else {
+                document.getElementById('app-logo-title').innerText = "LIST'ME";
+            }
+        });
+
         startRealtimeSync(user.uid); 
         showPage('tasks');
     } else {
         currentUser = null;
         document.getElementById('main-nav').style.display = 'none';
+        document.getElementById('app-logo-title').innerText = "LIST'ME";
         stopRealtimeSync();
         document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
         document.getElementById('auth-page').style.display = 'block';
     }
 });
 
-// --- SYNCHRONISATION PRIVÉE (Filtrée par UID) ---
+// Enregistrement du surnom
+document.getElementById('btn-save-nickname').onclick = () => {
+    const nick = document.getElementById('profile-nickname').value.trim();
+    if (nick && currentUser) {
+        db.collection("users").doc(currentUser.uid).set({ nickname: nick }, { merge: true })
+            .then(() => {
+                document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`;
+                alert("Surnom enregistré avec succès !");
+            });
+    }
+};
+
+// --- SYNCHRONISATION PRIVÉE ---
 function startRealtimeSync(userId) {
     unsubscribeTasks = db.collection("tasks").where("userId", "==", userId)
         .onSnapshot((snapshot) => {
-            tasks = [];
-            snapshot.forEach((doc) => {
-                let data = doc.data(); data.id = doc.id; tasks.push(data);
-            });
-            renderTasks();
-            if(viewState === 'day') renderCalendar();
+            tasks = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; tasks.push(data); });
+            renderTasks(); if(viewState === 'day') renderCalendar();
         });
-
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId)
         .onSnapshot((snapshot) => {
-            dailyTodo = [];
-            snapshot.forEach((doc) => {
-                let data = doc.data(); data.id = doc.id; dailyTodo.push(data);
-            });
+            dailyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; dailyTodo.push(data); });
             renderTodo();
         });
-
     unsubscribeWeekly = db.collection("weeklyTodo").where("userId", "==", userId)
         .onSnapshot((snapshot) => {
-            weeklyTodo = [];
-            snapshot.forEach((doc) => {
-                let data = doc.data(); data.id = doc.id; weeklyTodo.push(data);
-            });
+            weeklyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; weeklyTodo.push(data); });
             renderTodo();
         });
 }
 
 function stopRealtimeSync() {
-    if (unsubscribeTasks) unsubscribeTasks();
-    if (unsubscribeDaily) unsubscribeDaily();
-    if (unsubscribeWeekly) unsubscribeWeekly();
+    if (unsubscribeTasks) unsubscribeTasks(); if (unsubscribeDaily) unsubscribeDaily(); if (unsubscribeWeekly) unsubscribeWeekly();
     tasks = []; dailyTodo = []; weeklyTodo = [];
 }
 
-// --- LOGIQUE D'AUTHENTIFICATION ---
+// --- AUTHENTIFICATION BOUTONS ---
 document.getElementById('btn-login').onclick = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    if(email && pass) { auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erreur : " + err.message)); }
+    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
+    if(email && pass) auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erreur : " + err.message));
 };
-
 document.getElementById('btn-register').onclick = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    if(email && pass) {
-        auth.createUserWithEmailAndPassword(email, pass)
-            .then(() => alert("Compte créé avec succès !"))
-            .catch(err => alert("Erreur d'inscription : " + err.message));
-    }
+    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
+    if(email && pass) auth.createUserWithEmailAndPassword(email, pass).then(() => alert("Compte créé !")).catch(err => alert("Erreur : " + err.message));
 };
-
-document.getElementById('btn-google').onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); });
-};
-
+document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut(); };
 
-// --- ONGLET : MES TÂCHES CLASSIQUES ---
+// --- ONGLET : MES TÂCHES ---
 function renderTasks() {
-    const c = document.getElementById('task-list'); 
-    if (!c) return; c.innerHTML = '';
+    const c = document.getElementById('task-list'); if (!c) return; c.innerHTML = '';
     tasks.sort((a,b) => (a.completed === b.completed) ? 0 : a.completed ? 1 : -1);
     tasks.forEach(t => {
-        const d = document.createElement('div');
-        d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''}`;
-        
+        const d = document.createElement('div'); d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''}`;
         let remindersText = "Aucun";
-        if(t.reminders && t.reminders.length > 0) {
-            remindersText = t.reminders.map(r => r === '0' ? "À l'heure" : `${r} min avant`).join(', ');
-        }
-
+        if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => r === '0' ? "À l'heure" : `${r} min avant`).join(', '); }
         d.innerHTML = `
             <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
                 <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
@@ -257,8 +255,6 @@ function renderTasks() {
     });
 }
 
-function toggleTaskCheck(id, currentStatus) { db.collection("tasks").doc(id).update({ completed: !currentStatus }); }
-function deleteTask(id) { db.collection("tasks").doc(id).delete(); }
 function editTask(id) {
     const task = tasks.find(t => t.id === id);
     if(task) {
@@ -266,13 +262,7 @@ function editTask(id) {
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-date').value = task.date;
         document.getElementById('task-time').value = task.time || "";
-        
-        // Appliquer les choix multiples enregistrés
-        const selectRem = document.getElementById('task-reminder');
-        Array.from(selectRem.options).forEach(opt => {
-            opt.selected = task.reminders ? task.reminders.includes(opt.value) : false;
-        });
-
+        setSelectedRemindersToBadges(task.reminders || []); // Active les bons badges
         document.getElementById('task-importance').value = task.importance;
         document.getElementById('modal-title').innerText = "Modifier la tâche";
         document.getElementById('task-modal').style.display = 'flex';
@@ -280,25 +270,14 @@ function editTask(id) {
 }
 
 document.getElementById('save-task').onclick = () => {
-    const n = document.getElementById('task-name').value;
-    const d = document.getElementById('task-date').value;
-    const time = document.getElementById('task-time').value;
-    const imp = document.getElementById('task-importance').value;
-    
-    // Récupération des choix multiples de rappels
-    const selectRem = document.getElementById('task-reminder');
-    const reminders = Array.from(selectRem.selectedOptions).map(opt => opt.value);
+    const n = document.getElementById('task-name').value; const d = document.getElementById('task-date').value;
+    const time = document.getElementById('task-time').value; const imp = document.getElementById('task-importance').value;
+    const reminders = getSelectedRemindersFromBadges(); // Extrait les données des badges tactiles
     
     if(n && d && currentUser) {
         let taskData = { name: n, date: d, time: time, reminders: reminders, importance: imp };
-        if(editingId) {
-            db.collection("tasks").doc(editingId).update(taskData);
-            editingId = null;
-        } else {
-            taskData.completed = false;
-            taskData.userId = currentUser.uid;
-            db.collection("tasks").add(taskData);
-        }
+        if(editingId) { db.collection("tasks").doc(editingId).update(taskData); editingId = null; } 
+        else { taskData.completed = false; taskData.userId = currentUser.uid; db.collection("tasks").add(taskData); }
         document.getElementById('task-modal').style.display = 'none';
     }
 };
@@ -347,11 +326,9 @@ function renderCalendar() {
 
 function openCalendarDayModal(day, monthName, year, dayTasks) {
     document.getElementById('cal-modal-date-title').innerText = `${day} ${monthName} ${year}`;
-    const container = document.getElementById('cal-modal-tasks-container');
-    container.innerHTML = '';
-    if(dayTasks.length === 0) {
-        container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche pour ce jour-ci</p>';
-    } else {
+    const container = document.getElementById('cal-modal-tasks-container'); container.innerHTML = '';
+    if(dayTasks.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche</p>'; } 
+    else {
         dayTasks.forEach(t => {
             container.innerHTML += `
                 <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05);">
@@ -372,18 +349,15 @@ function renderTodo() {
     
     if(todoMode === 'daily') {
         document.getElementById('todo-today-date').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
-        c.innerHTML = '<div class="weekly-container"></div>'; 
-        const wc = c.querySelector('.weekly-container');
+        c.innerHTML = '<div class="weekly-container"></div>'; const wc = c.querySelector('.weekly-container');
         
         for (let h = 8; h <= 20; h++) {
             const currentHourStr = `${h.toString().padStart(2, '0')}:00`;
             let items = dailyTodo.filter(it => it.date === todayStr && parseInt(it.time.split(':')[0]) === h);
             let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && parseInt(it.time.split(':')[0]) === h);
-            let combinedItems = [...items, ...weeklyItems];
-            combinedItems.sort((a,b) => a.time.localeCompare(b.time));
+            let combinedItems = [...items, ...weeklyItems]; combinedItems.sort((a,b) => a.time.localeCompare(b.time));
 
-            const hourCard = document.createElement('div');
-            hourCard.className = 'weekly-day-card';
+            const hourCard = document.createElement('div'); hourCard.className = 'weekly-day-card';
             hourCard.innerHTML = `
                 <div class="weekly-day-header">
                     <span class="weekly-day-title">${currentHourStr}</span>
@@ -393,7 +367,7 @@ function renderTodo() {
                     ${combinedItems.map(it => {
                         const isWeekly = it.hasOwnProperty('dayOfWeek');
                         const checkFunc = isWeekly ? `toggleWeeklyTodo('${it.id}', ${it.completed})` : `toggleTodo('${it.id}', ${it.completed})`;
-                        const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')" ` : `deleteDailyTodo('${it.id}')"`;
+                        const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')` : `deleteDailyTodo('${it.id}')`;
                         return `
                             <div class="weekly-item">
                                 <span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">
@@ -410,16 +384,12 @@ function renderTodo() {
         }
     } else {
         document.getElementById('todo-today-date').innerText = "Planification Hebdomadaire";
-        c.innerHTML = '<div class="weekly-container"></div>';
-        const wc = c.querySelector('.weekly-container');
+        c.innerHTML = '<div class="weekly-container"></div>'; const wc = c.querySelector('.weekly-container');
         const weeklyOrder = [1, 2, 3, 4, 5, 6, 0];
         
         weeklyOrder.forEach(dayNum => {
-            const dayTasks = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === dayNum);
-            dayTasks.sort((a,b) => a.time.localeCompare(b.time));
-            
-            const dayCard = document.createElement('div');
-            dayCard.className = 'weekly-day-card';
+            const dayTasks = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === dayNum); dayTasks.sort((a,b) => a.time.localeCompare(b.time));
+            const dayCard = document.createElement('div'); dayCard.className = 'weekly-day-card';
             dayCard.innerHTML = `
                 <div class="weekly-day-header">
                     <span class="weekly-day-title">${dayNamesFr[dayNum]}</span>
@@ -435,8 +405,7 @@ function renderTodo() {
                                 <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button>
                                 <button onclick="deleteWeeklyTodo('${it.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button>
                             </div>
-                        </div>
-                    `).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucune activité planifiée</span>'}
+                        </div>`).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucune activité planifiée</span>'}
                 </div>`;
             wc.appendChild(dayCard);
         });
@@ -444,23 +413,16 @@ function renderTodo() {
 }
 
 function openTodoModal(time, isWeekly, dayNum = 1) { 
-    editingTodoId = null;
-    document.getElementById('todo-time').value = time;
-    document.getElementById('todo-task-name').value = '';
+    editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = '';
     document.getElementById('todo-modal-title').innerText = "Ajouter au planning";
-    const selector = document.getElementById('todo-day-selector-block');
-    if(isWeekly) { selector.style.display = 'none'; document.getElementById('todo-day-select').value = dayNum; } else { selector.style.display = 'none'; }
+    if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; }
     document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly);
     document.getElementById('todo-modal').style.display = 'flex'; 
 }
 
 function editTodoItem(id, name, time, isWeekly, dayNum = 1) {
-    editingTodoId = id;
-    document.getElementById('todo-time').value = time;
-    document.getElementById('todo-task-name').value = name;
+    editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name;
     document.getElementById('todo-modal-title').innerText = "Modifier le planning";
-    const selector = document.getElementById('todo-day-selector-block');
-    selector.style.display = 'none';
     if(isWeekly) document.getElementById('todo-day-select').value = dayNum;
     document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly);
     document.getElementById('todo-modal').style.display = 'flex'; 
@@ -472,43 +434,27 @@ function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete(); }
 function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete(); }
 
 document.getElementById('save-todo').onclick = () => {
-    const n = document.getElementById('todo-task-name').value;
-    const t = document.getElementById('todo-time').value;
+    const n = document.getElementById('todo-task-name').value; const t = document.getElementById('todo-time').value;
     const isWeekly = document.getElementById('save-todo').getAttribute('data-weekly-mode') === 'true';
-    
     if(n && t && currentUser) { 
         if(editingTodoId) {
-            let collection = isWeekly ? "weeklyTodo" : "dailyTodo";
-            let updateData = { name: n, time: t };
+            let collection = isWeekly ? "weeklyTodo" : "dailyTodo"; let updateData = { name: n, time: t };
             if(isWeekly) updateData.dayOfWeek = document.getElementById('todo-day-select').value;
-            db.collection(collection).doc(editingTodoId).update(updateData);
-            editingTodoId = null;
+            db.collection(collection).doc(editingTodoId).update(updateData); editingTodoId = null;
         } else {
-            if(isWeekly) {
-                const daySelect = document.getElementById('todo-day-select').value;
-                db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: daySelect, completed: false, userId: currentUser.uid });
-            } else {
-                db.collection("dailyTodo").add({ name: n, time: t, date: todayStr, completed: false, userId: currentUser.uid }); 
-            }
+            if(isWeekly) { db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: document.getElementById('todo-day-select').value, completed: false, userId: currentUser.uid }); } 
+            else { db.collection("dailyTodo").add({ name: n, time: t, date: todayStr, completed: false, userId: currentUser.uid }); }
         }
-        document.getElementById('todo-modal').style.display = 'none';
-        document.getElementById('todo-task-name').value = '';
+        document.getElementById('todo-modal').style.display = 'none'; document.getElementById('todo-task-name').value = '';
     }
 };
 
 // --- INITIALISATION GENERALE ---
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; 
-    document.getElementById('task-reminder').selectedIndex = -1; document.getElementById('task-date').value = todayStr; 
-    document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; 
+    setSelectedRemindersToBadges([]); // Reset badges
+    document.getElementById('task-date').value = todayStr; document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; 
 };
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
-
-window.onclick = (e) => { 
-    if(e.target.className === 'modal') { 
-        document.getElementById('task-modal').style.display = 'none'; 
-        document.getElementById('todo-modal').style.display = 'none'; 
-        document.getElementById('calendar-day-modal').style.display = 'none';
-    } 
-};
+window.onclick = (e) => { if(e.target.className === 'modal') { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; } };
