@@ -210,3 +210,15 @@ select option { background: var(--card-bg); color: var(--text-color); }
     transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
+/* --- CORRECTION VISUELLE TO-DO LIST (BARRÉ & ITALIQUE) --- */
+.weekly-item span {
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+/* Force l'application des styles même si une autre règle CSS tente de s'interposer */
+.weekly-item span[style*="line-through"] {
+    font-style: italic !important;
+    text-decoration: line-through !important;
+    opacity: 0.5 !important;
+}
