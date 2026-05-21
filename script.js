@@ -25,6 +25,7 @@ let currentTheme = localStorage.getItem('listme_theme') || 'pink';
 let viewState = 'day'; 
 let todoMode = 'daily';
 let editingId = null;
+let editingTodoId = null; // Pour l'édition de l'agenda
 let selectedYear = new Date().getFullYear();
 let selectedMonth = new Date().getMonth();
 
@@ -127,17 +128,12 @@ document.getElementById('btn-register').onclick = () => {
 
 document.getElementById('btn-google').onclick = () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-        .catch((err) => {
-            alert("Erreur Google : " + err.message);
-        });
+    auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); });
 };
 
-document.getElementById('btn-logout').onclick = () => {
-    auth.signOut();
-};
+document.getElementById('btn-logout').onclick = () => { auth.signOut(); };
 
-// --- ONGLET : MES TÂCHES ---
+// --- ONGLET : MES TÂCHES CLASSIQUES ---
 function renderTasks() {
     const c = document.getElementById('task-list'); 
     if (!c) return; c.innerHTML = '';
@@ -148,7 +144,8 @@ function renderTasks() {
         d.innerHTML = `
             <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
                 <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
-                <small>${t.date}</small>
+                <small>📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
+                ${t.reminder && t.reminder !== 'none' ? `<br><small style="color:var(--primary-dark);">🔔 Rappel : ${t.reminder} min avant</small>` : ''}
             </div>
             <div class="task-actions">
                 <button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>
@@ -166,6 +163,8 @@ function editTask(id) {
         editingId = id;
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-date').value = task.date;
+        document.getElementById('task-time').value = task.time || "";
+        document.getElementById('task-reminder').value = task.reminder || "none";
         document.getElementById('task-importance').value = task.importance;
         document.getElementById('modal-title').innerText = "Modifier la tâche";
         document.getElementById('task-modal').style.display = 'flex';
@@ -175,13 +174,19 @@ function editTask(id) {
 document.getElementById('save-task').onclick = () => {
     const n = document.getElementById('task-name').value;
     const d = document.getElementById('task-date').value;
+    const time = document.getElementById('task-time').value;
+    const rem = document.getElementById('task-reminder').value;
     const imp = document.getElementById('task-importance').value;
+    
     if(n && d && currentUser) {
+        let taskData = { name: n, date: d, time: time, reminder: rem, importance: imp };
         if(editingId) {
-            db.collection("tasks").doc(editingId).update({ name: n, date: d, importance: imp });
+            db.collection("tasks").doc(editingId).update(taskData);
             editingId = null;
         } else {
-            db.collection("tasks").add({ name: n, date: d, importance: imp, completed: false, userId: currentUser.uid });
+            taskData.completed = false;
+            taskData.userId = currentUser.uid;
+            db.collection("tasks").add(taskData);
         }
         document.getElementById('task-modal').style.display = 'none';
     }
@@ -213,21 +218,48 @@ function renderCalendar() {
         for (let i = 1; i <= days; i++) {
             const ds = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
             const div = document.createElement('div'); div.className = 'day-card';
+            
+            // Surbrillance Aujourd'hui
+            if(ds === todayStr) div.classList.add('is-today');
+
             const dt = tasks.filter(tk => tk.date === ds);
             if(dt.length > 0) {
                 const imps = dt.map(tk => tk.importance);
                 if(imps.includes('high')) div.classList.add('has-high');
                 else if(imps.includes('medium')) div.classList.add('has-medium');
                 else div.classList.add('has-low');
-                div.onclick = () => { alert(`Tâches du ${i} ${monthNames[selectedMonth]}:\n` + dt.map(tk => `- ${tk.name}`).join('\n')); };
             }
+            
+            // Ouverture Modal Customisé à la place de l'alert() moche
+            div.onclick = () => openCalendarDayModal(i, monthNames[selectedMonth], selectedYear, dt);
+            
             div.innerHTML = `<span style="font-size:0.6rem; opacity:0.5; display:block;">${dayInitials[new Date(selectedYear, selectedMonth, i).getDay()]}</span><b>${i}</b>`;
             c.appendChild(div);
         }
     }
 }
 
-// --- ONGLET : TO-DO LIST ---
+// Fonction d'ouverture du modal de consultation calendrier esthétique
+function openCalendarDayModal(day, monthName, year, dayTasks) {
+    document.getElementById('cal-modal-date-title').innerText = `${day} ${monthName} ${year}`;
+    const container = document.getElementById('cal-modal-tasks-container');
+    container.innerHTML = '';
+
+    if(dayTasks.length === 0) {
+        container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche pour ce jour-ci</p>';
+    } else {
+        dayTasks.forEach(t => {
+            container.innerHTML += `
+                <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05);">
+                    <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>
+                    ${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}
+                </div>`;
+        });
+    }
+    document.getElementById('calendar-day-modal').style.display = 'flex';
+}
+
+// --- ONGLET : TO-DO LIST (GRAPHISMES ALIGNÉS SUR L'HEBDO & FIX MINUTES) ---
 function setTodoMode(m) { todoMode = m; renderTodo(); }
 function renderTodo() {
     const c = document.getElementById('todo-content'); if (!c) return;
@@ -236,31 +268,46 @@ function renderTodo() {
     
     if(todoMode === 'daily') {
         document.getElementById('todo-today-date').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
-        c.innerHTML = '<div class="schedule-container"></div>';
-        const sc = c.querySelector('.schedule-container');
+        c.innerHTML = '<div class="weekly-container"></div>'; // Utilise le container fluide type hebdo
+        const wc = c.querySelector('.weekly-container');
         
         for (let h = 8; h <= 20; h++) {
-            const time = `${h.toString().padStart(2, '0')}:00`;
-            let items = dailyTodo.filter(it => it.date === todayStr && it.time === time);
-            let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && it.time === time);
+            const currentHourStr = `${h.toString().padStart(2, '0')}:00`;
+            
+            // Correction Algorithme : On attrape TOUTES les minutes de l'heure h (ex: 08h10 ou 08h45 rentrent dans 08h00)
+            let items = dailyTodo.filter(it => it.date === todayStr && parseInt(it.time.split(':')[0]) === h);
+            let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && parseInt(it.time.split(':')[0]) === h);
             let combinedItems = [...items, ...weeklyItems];
+            combinedItems.sort((a,b) => a.time.localeCompare(b.time));
 
-            sc.innerHTML += `
-                <div class="time-slot">
-                    <div class="time-label">${time}</div>
-                    <div class="slot-content">
-                        <div style="flex:1; cursor:pointer;" onclick="openTodoModal('${time}', false)">
-                            ${combinedItems.map(it => {
-                                const isWeekly = it.hasOwnProperty('dayOfWeek');
-                                const checkFunc = isWeekly ? `toggleWeeklyTodo('${it.id}', ${it.completed})` : `toggleTodo('${it.id}', ${it.completed})`;
-                                return `<div onclick="event.stopPropagation(); ${checkFunc}">${it.completed ? '✓' : '○'} ${it.name} <span style="font-size:0.7rem; opacity:0.5;">${isWeekly ? '(Hebdo)' : ''}</span></div>`;
-                            }).join('') || '...'}
-                        </div>
-                        <button onclick="openTodoModal('${time}', false)" style="background:none; border:none; color:var(--primary); font-size:1.2rem; cursor:pointer;">✎</button>
-                    </div>
+            const hourCard = document.createElement('div');
+            hourCard.className = 'weekly-day-card';
+            hourCard.innerHTML = `
+                <div class="weekly-day-header">
+                    <span class="weekly-day-title">${currentHourStr}</span>
+                    <button onclick="openTodoModal('${h.toString().padStart(2,'0')}:00', false)" style="background:var(--primary); border:none; color:white; border-radius:50%; width:25px; height:25px; font-weight:bold; cursor:pointer;">+</button>
+                </div>
+                <div class="weekly-subtasks">
+                    ${combinedItems.map(it => {
+                        const isWeekly = it.hasOwnProperty('dayOfWeek');
+                        const checkFunc = isWeekly ? `toggleWeeklyTodo('${it.id}', ${it.completed})` : `toggleTodo('${it.id}', ${it.completed})`;
+                        const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')` : `deleteDailyTodo('${it.id}')`;
+                        return `
+                            <div class="weekly-item">
+                                <span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">
+                                    <b>${it.time}</b> : ${it.name} ${isWeekly ? '<small style="opacity:0.5;">(Hebdo)</small>':''}
+                                </span>
+                                <div>
+                                    <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', ${isWeekly}, ${isWeekly ? it.dayOfWeek : 0})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button>
+                                    <button onclick="${delFunc}" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button>
+                                </div>
+                            </div>`;
+                    }).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucun événement</span>'}
                 </div>`;
+            wc.appendChild(hourCard);
         }
     } else {
+        // --- VUE HEBDO EXISTANTE ET PARFAITE ---
         document.getElementById('todo-today-date').innerText = "Planification Hebdomadaire";
         c.innerHTML = '<div class="weekly-container"></div>';
         const wc = c.querySelector('.weekly-container');
@@ -283,18 +330,23 @@ function renderTodo() {
                             <span onclick="toggleWeeklyTodo('${it.id}', ${it.completed})" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">
                                 <b>${it.time}</b> : ${it.name}
                             </span>
-                            <button onclick="deleteWeeklyTodo('${it.id}')" style="background:none; border:none; color:var(--danger); font-size:1.1rem; cursor:pointer; padding-left:10px;">×</button>
+                            <div>
+                                <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-right:5px;">✎</button>
+                                <button onclick="deleteWeeklyTodo('${it.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">×</button>
+                            </div>
                         </div>
                     `).join('') || '<span style="opacity:0.3; font-style:italic; font-size:0.85rem;">Aucune activité planifiée</span>'}
-                </div>
-            `;
+                </div>`;
             wc.appendChild(dayCard);
         });
     }
 }
 
 function openTodoModal(time, isWeekly, dayNum = 1) { 
+    editingTodoId = null;
     document.getElementById('todo-time').value = time;
+    document.getElementById('todo-task-name').value = '';
+    document.getElementById('todo-modal-title').innerText = "Ajouter au planning";
     const selector = document.getElementById('todo-day-selector-block');
     if(isWeekly) { selector.style.display = 'none'; document.getElementById('todo-day-select').value = dayNum; } 
     else { selector.style.display = 'none'; }
@@ -302,9 +354,22 @@ function openTodoModal(time, isWeekly, dayNum = 1) {
     document.getElementById('todo-modal').style.display = 'flex'; 
 }
 
+function editTodoItem(id, name, time, isWeekly, dayNum = 1) {
+    editingTodoId = id;
+    document.getElementById('todo-time').value = time;
+    document.getElementById('todo-task-name').value = name;
+    document.getElementById('todo-modal-title').innerText = "Modifier le planning";
+    const selector = document.getElementById('todo-day-selector-block');
+    selector.style.display = 'none';
+    if(isWeekly) document.getElementById('todo-day-select').value = dayNum;
+    document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly);
+    document.getElementById('todo-modal').style.display = 'flex'; 
+}
+
 function toggleTodo(id, currentStatus) { db.collection("dailyTodo").doc(id).update({ completed: !currentStatus }); }
 function toggleWeeklyTodo(id, currentStatus) { db.collection("weeklyTodo").doc(id).update({ completed: !currentStatus }); }
 function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete(); }
+function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete(); }
 
 document.getElementById('save-todo').onclick = () => {
     const n = document.getElementById('todo-task-name').value;
@@ -312,11 +377,21 @@ document.getElementById('save-todo').onclick = () => {
     const isWeekly = document.getElementById('save-todo').getAttribute('data-weekly-mode') === 'true';
     
     if(n && t && currentUser) { 
-        if(isWeekly) {
-            const daySelect = document.getElementById('todo-day-select').value;
-            db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: daySelect, completed: false, userId: currentUser.uid });
+        if(editingTodoId) {
+            // Logique de modification
+            let collection = isWeekly ? "weeklyTodo" : "dailyTodo";
+            let updateData = { name: n, time: t };
+            if(isWeekly) updateData.dayOfWeek = document.getElementById('todo-day-select').value;
+            db.collection(collection).doc(editingTodoId).update(updateData);
+            editingTodoId = null;
         } else {
-            db.collection("dailyTodo").add({ name: n, time: t, date: todayStr, completed: false, userId: currentUser.uid }); 
+            // Logique d'ajout
+            if(isWeekly) {
+                const daySelect = document.getElementById('todo-day-select').value;
+                db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: daySelect, completed: false, userId: currentUser.uid });
+            } else {
+                db.collection("dailyTodo").add({ name: n, time: t, date: todayStr, completed: false, userId: currentUser.uid }); 
+            }
         }
         document.getElementById('todo-modal').style.display = 'none';
         document.getElementById('todo-task-name').value = '';
@@ -325,8 +400,21 @@ document.getElementById('save-todo').onclick = () => {
 
 // --- INITIALISATION GENERALE ---
 document.getElementById('add-task-btn').onclick = () => { 
-    editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-date').value = todayStr; 
-    document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; 
+    editingId = null; 
+    document.getElementById('task-name').value = ""; 
+    document.getElementById('task-time').value = ""; 
+    document.getElementById('task-reminder').value = "none"; 
+    document.getElementById('task-date').value = todayStr; 
+    document.getElementById('modal-title').innerText = "Nouvelle Tâche"; 
+    document.getElementById('task-modal').style.display = 'flex'; 
 };
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
-window.onclick = (e) => { if(e.target.className === 'modal') { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; } };
+document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
+
+window.onclick = (e) => { 
+    if(e.target.className === 'modal') { 
+        document.getElementById('task-modal').style.display = 'none'; 
+        document.getElementById('todo-modal').style.display = 'none'; 
+        document.getElementById('calendar-day-modal').style.display = 'none';
+    } 
+};
