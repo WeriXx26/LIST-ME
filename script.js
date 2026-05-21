@@ -20,6 +20,7 @@ let dailyTodo = [];
 let weeklyTodo = [];
 let currentUser = null; 
 let userNickname = ""; 
+let hasShownWelcomeThisSession = false; // Permet de n'ouvrir le pop-up qu'une seule fois au lancement
 let unsubscribeTasks, unsubscribeDaily, unsubscribeWeekly; 
 
 let currentTheme = localStorage.getItem('listme_theme') || 'pink';
@@ -174,6 +175,7 @@ auth.onAuthStateChanged((user) => {
     } else {
         currentUser = null;
         userNickname = "";
+        hasShownWelcomeThisSession = false; // Reset de la session
         document.getElementById('main-nav').style.display = 'none';
         document.getElementById('app-logo-title').innerText = "LIST'ME";
         stopRealtimeSync();
@@ -189,7 +191,6 @@ document.getElementById('btn-save-nickname').onclick = () => {
             .then(() => {
                 userNickname = nick;
                 document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`;
-                updateWelcomeDashboard(); 
                 alert("Surnom enregistré avec succès !");
             });
     }
@@ -201,7 +202,13 @@ function startRealtimeSync(userId) {
         .onSnapshot((snapshot) => {
             tasks = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; tasks.push(data); });
             renderTasks(); 
-            updateWelcomeDashboard(); 
+            
+            // Déclenchement automatique unique du Pop-up au chargement des données
+            if (!hasShownWelcomeThisSession && tasks.length >= 0) {
+                triggerWelcomeModal();
+                hasShownWelcomeThisSession = true;
+            }
+            
             if(viewState === 'day') renderCalendar();
         });
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId)
@@ -233,12 +240,12 @@ document.getElementById('btn-register').onclick = () => {
 document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut(); };
 
-// --- LOGIQUE MESSAGE DE BIENVENUE & RÉCAPITULATIF DU JOUR ---
-function updateWelcomeDashboard() {
-    const dashboard = document.getElementById('welcome-dashboard');
+// --- NOUVEAU : MOTEUR POP-UP FENÊTRE AUTOMATIQUE DE BIENVENUE ---
+function triggerWelcomeModal() {
+    const wModal = document.getElementById('welcome-modal');
     const msgText = document.getElementById('welcome-message-text');
     const summaryZone = document.getElementById('today-summary-zone');
-    if(!dashboard) return;
+    if(!wModal) return;
     
     let nameToDisplay = userNickname ? userNickname : "toi";
     msgText.innerText = `Welcome back, ${nameToDisplay} ! 👋`;
@@ -247,9 +254,9 @@ function updateWelcomeDashboard() {
     summaryZone.innerHTML = '';
     
     if(todayTasks.length === 0) {
-        summaryZone.innerHTML = `<p style="font-size: 0.9rem; font-style: italic; opacity: 0.75; margin-top: 5px;">Aucune tâche urgente pour aujourd'hui. Passe une excellente journée ! ✨</p>`;
+        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; margin-top: 10px; text-align:center;">Aucune tâche urgente au calendrier aujourd'hui. Profite de ta journée ! ✨</p>`;
     } else {
-        summaryZone.innerHTML = `<p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: var(--primary-dark);">Au programme aujourd'hui :</p>`;
+        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: var(--primary-dark);">Voici tes tâches de la journée :</p>`;
         todayTasks.forEach(t => {
             summaryZone.innerHTML += `
                 <div class="welcome-summary-item">
@@ -260,7 +267,7 @@ function updateWelcomeDashboard() {
                 </div>`;
         });
     }
-    dashboard.style.display = 'block';
+    wModal.style.display = 'flex';
 }
 
 // --- ONGLET : MES TÂCHES ---
@@ -487,4 +494,13 @@ document.getElementById('add-task-btn').onclick = () => {
 };
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
-window.onclick = (e) => { if(e.target.className === 'modal') { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; } };
+
+// Modification de la fermeture globale pour intégrer la fermeture du Pop-up automatique au clic extérieur
+window.onclick = (e) => { 
+    if(e.target.className === 'modal') { 
+        document.getElementById('task-modal').style.display = 'none'; 
+        document.getElementById('todo-modal').style.display = 'none'; 
+        document.getElementById('calendar-day-modal').style.display = 'none';
+        document.getElementById('welcome-modal').style.display = 'none';
+    } 
+};
