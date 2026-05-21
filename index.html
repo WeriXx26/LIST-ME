@@ -47,8 +47,17 @@
         <section id="tasks-page" style="display:none;">
             <div class="header-action header-centered">
                 <h2>Mes Tâches</h2>
-                <button id="add-task-btn" style="position: absolute; right: 20px;">Ajouter</button>
             </div>
+            
+            <div id="welcome-dashboard" class="welcome-card" style="display:none;">
+                <h3 id="welcome-message-text">Welcome back ! 👋</h3>
+                <div id="today-summary-zone"></div>
+            </div>
+
+            <div class="action-bar-left">
+                <button id="add-task-btn" class="btn-add-bubble">+ Ajouter une tâche</button>
+            </div>
+
             <div id="task-list"></div>
         </section>
 
@@ -135,7 +144,7 @@
 
     <div id="todo-modal" class="modal">
         <div class="modal-content">
-            <h3 id="todo-modal-title">Planning</h3>
+            <h3>Planning</h3>
             <div id="todo-day-selector-block" style="display:none; flex-direction:column; gap:5px;">
                 <label>Jour de la semaine</label>
                 <select id="todo-day-select">
