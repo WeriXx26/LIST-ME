@@ -22,7 +22,7 @@ body {
     color: var(--text-color); transition: background 0.3s ease;
 }
 
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title { font-family: 'Mogra', cursive; }
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title, #todo-modal-title, #cal-modal-date-title { font-family: 'Mogra', cursive; }
 
 /* NAVBAR & EN-TÊTE */
 .navbar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 9999; }
@@ -47,23 +47,18 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 .task-card, .profile-card, .schedule-container, .grid-item, .day-card, .modal-content, .weekly-day-card { background: var(--card-bg) !important; color: var(--text-color); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
 /* TÂCHES */
-.task-card { padding: 20px; margin-bottom: 20px; border-left: 12px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
+.task-card { padding: 18px 20px; margin-bottom: 20px; border-left: 12px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
 .task-actions { display: flex; gap: 15px; align-items: center; }
 
-/* AGENDA & HEBDO */
-.time-slot { display: flex; border-bottom: 1px solid rgba(128,128,128,0.1); min-height: 75px; }
-.time-slot:nth-child(even) { background: rgba(128, 128, 128, 0.03); }
-.time-label { width: 80px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border-right: 1px solid rgba(128,128,128,0.1); color: var(--primary); }
-.slot-content { flex: 1; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
-
-.weekly-day-card { margin-bottom: 15px; padding: 15px 20px; border-left: 5px solid var(--primary); }
-.weekly-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+/* AGENDA COHÉRENT : STYLE DE LA VUE JOURNALIÈRE ALIGNÉ SUR L'HEBDO */
+.weekly-day-card { margin-bottom: 15px; padding: 15px 20px; border-left: 5px solid var(--primary); transition: background 0.3s; }
+.weekly-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .weekly-day-title { color: var(--primary); font-size: 1.2rem; }
-.weekly-subtasks { display: flex; flex-direction: column; gap: 5px; padding-left: 5px; font-size: 0.95rem; }
-.weekly-item { display: flex; justify-content: space-between; align-items: center; opacity: 0.9; padding: 4px 0; border-bottom: 1px dashed rgba(128,128,128,0.1); }
+.weekly-subtasks { display: flex; flex-direction: column; gap: 8px; padding-left: 5px; font-size: 0.95rem; }
+.weekly-item { display: flex; justify-content: space-between; align-items: center; opacity: 0.9; padding: 6px 0; border-bottom: 1px dashed rgba(128,128,128,0.15); }
 
 /* CALENDRIER */
 .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
@@ -71,10 +66,22 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 .grid-item { padding: 20px 5px; text-align: center; cursor: pointer; }
 .grid-item.selected { background: var(--primary); color: white; }
 
-.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); }
+.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); position: relative; }
 .day-card.has-high { border-bottom: 5px solid var(--danger) !important; }
 .day-card.has-medium { border-bottom: 5px solid var(--warning) !important; }
 .day-card.has-low { border-bottom: 5px solid var(--success) !important; }
+
+/* NOUVEAU : Animation de surbrillance pour le jour actuel (Aujourd'hui) */
+.day-card.is-today {
+    border: 2px solid var(--primary) !important;
+    box-shadow: 0 0 10px rgba(0, 206, 209, 0.4);
+    animation: pulseToday 2s infinite;
+}
+@keyframes pulseToday {
+    0% { border-color: var(--primary); }
+    50% { border-color: var(--primary-dark); box-shadow: 0 0 14px rgba(0, 206, 209, 0.7); }
+    100% { border-color: var(--primary); }
+}
 
 /* PROFIL */
 .profile-card { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
@@ -92,4 +99,4 @@ input, select { padding: 14px; border-radius: 10px; border: 1px solid rgba(128,1
 select option { background: var(--card-bg); color: var(--text-color); }
 
 #add-task-btn, .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-.btn-secondary { background: rgba(128,128,128,0.2); color: inherit; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; }
+.btn-secondary { background: rgba(128,128,128,0.2); color: inherit; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; text-align: center;}
