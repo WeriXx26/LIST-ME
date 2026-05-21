@@ -21,7 +21,7 @@ let weeklyTodo = [];
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
-let taskSubView = "active"; // Gère la sous-page "active" ou "archive"
+let taskSubView = "active"; 
 let unsubscribeTasks, unsubscribeDaily, unsubscribeWeekly; 
 
 let currentTheme = localStorage.getItem('listme_theme') || 'pink';
@@ -39,6 +39,15 @@ const todayStr = new Date().toISOString().split('T')[0];
 const currentDayOfWeek = new Date().getDay();
 
 document.body.className = `theme-${currentTheme}`;
+
+// --- BULLE DE NOTIFICATION TOAST INTERNE ---
+function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    if (!toast) return;
+    toast.innerText = message;
+    toast.className = "toast-show";
+    setTimeout(() => { toast.className = "toast-hidden"; }, 3000);
+}
 
 function changeTheme(t) { 
     document.body.className = `theme-${t}`; 
@@ -59,23 +68,21 @@ function showPage(p) {
     if(p === 'tasks') renderTasks();
 }
 
-// Commutateur de sous-vue (Mes Tâches Actives VS Archives du Passé)
 function switchTaskSubView(view) {
     taskSubView = view;
     document.querySelectorAll('.sub-menu-tab').forEach(b => b.classList.remove('active'));
-    
     const actionBar = document.getElementById('tasks-action-bar');
     if(view === 'active') {
         document.getElementById('sub-btn-active-tasks').classList.add('active');
-        if(actionBar) actionBar.style.display = 'flex'; // Affiche ajouter/filtres
+        if(actionBar) actionBar.style.display = 'flex';
     } else {
         document.getElementById('sub-btn-archived-tasks').classList.add('active');
-        if(actionBar) actionBar.style.display = 'none'; // Cache ajouter/filtres en archive
+        if(actionBar) actionBar.style.display = 'none';
     }
     renderTasks();
 }
 
-// --- MOTEUR DE VÉRIFICATION EN CONTINU (Notifications & Rafraîchissement Urgence 1h) ---
+// --- MOTEUR DE VÉRIFICATION EN CONTINU ---
 function runNotificationEngine() {
     const now = new Date();
     const todayString = now.toISOString().split('T')[0];
@@ -83,7 +90,6 @@ function runNotificationEngine() {
     const minute = now.getMinutes();
     const dayOfWeek = now.getDay();
 
-    // Force la liste des tâches à se redessiner s'il y a un changement d'état d'urgence à la minute
     if(document.getElementById('tasks-page').style.display === 'block') {
         renderTasks();
     }
@@ -135,13 +141,12 @@ function runNotificationEngine() {
         }
     });
 }
-// Horloge interne cadencée toutes les 30 secondes
 setInterval(runNotificationEngine, 30000);
 
 function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission(); } }
 function sendNotification(title, body) { if ("Notification" in window && Notification.permission === "granted") { new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" }); } }
 
-// --- COMPORTEMENT BADGES DE RAPPEL ---
+// --- BADGES DE RAPPEL ---
 document.querySelectorAll('.reminder-badge').forEach(badge => { badge.onclick = () => { badge.classList.toggle('active'); }; });
 function getSelectedRemindersFromBadges() { let activeReminders = []; document.querySelectorAll('.reminder-badge.active').forEach(badge => { activeReminders.push(badge.getAttribute('data-value')); }); return activeReminders; }
 function setSelectedRemindersToBadges(remindersArray) { document.querySelectorAll('.reminder-badge').forEach(badge => { const val = badge.getAttribute('data-value'); if(remindersArray && remindersArray.includes(val)) { badge.classList.add('active'); } else { badge.classList.remove('active'); } }); }
@@ -178,7 +183,9 @@ document.getElementById('btn-save-nickname').onclick = () => {
     const nick = document.getElementById('profile-nickname').value.trim();
     if (nick && currentUser) {
         db.collection("users").doc(currentUser.uid).set({ nickname: nick }, { merge: true }).then(() => {
-            userNickname = nick; document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`; alert("Surnom enregistré !");
+            userNickname = nick; 
+            document.getElementById('app-logo-title').innerText = `LIST'ME - ${nick}`; 
+            showToast("Surnom enregistré avec succès ! ✨");
         });
     }
 };
@@ -217,92 +224,55 @@ function triggerWelcomeModal() {
     wModal.style.display = 'flex';
 }
 
-// --- ONGLET : MES TÂCHES (Moteur de tri + Logique d'Archives + Urgence Violette <1h) ---
+// --- ONGLET : MES TÂCHES ---
 function renderTasks() {
     const c = document.getElementById('task-list'); if (!c) return; c.innerHTML = '';
     const now = new Date();
     
-    // FILTRAGE LOGIQUE POUR LES ARCHIVES AUTOMATIQUES
-    let activeList = [];
-    let archiveList = [];
-    
+    let activeList = []; let archiveList = [];
     tasks.forEach(t => {
         if(t.completed) {
-            // Si la tâche a été complétée avant AUJOURD'HUI -> Elle va en archive
-            if(t.completedAtStr && t.completedAtStr !== todayStr) { archiveList.push(t); } 
-            else { activeList.push(t); } // Reste visible aujourd'hui
-        } else {
-            activeList.push(t);
-        }
+            if(t.completedAtStr && t.completedAtStr !== todayStr) { archiveList.push(t); } else { activeList.push(t); }
+        } else { activeList.push(t); }
     });
 
-    // SÉLECTION DE LA SOUS-VUE SOUHAITÉE PAR L'UTILISATEUR
     let filteredList = (taskSubView === "active") ? activeList : archiveList;
 
     if (taskSubView === "active") {
         const sortMode = document.getElementById('task-sort-filter').value;
-        
-        // Séparer les imminentes (<1h), les standard en cours, et les complétées du jour
-        let imminentTasks = [];
-        let standardTasks = [];
-        let completedTodayTasks = [];
+        let imminentTasks = []; let standardTasks = []; let completedTodayTasks = [];
 
         filteredList.forEach(t => {
-            if(t.completed) {
-                completedTodayTasks.push(t);
-                return;
-            }
-            
-            // Calcul de l'urgence critique (<1h pour aujourd'hui)
+            if(t.completed) { completedTodayTasks.push(t); return; }
             if(t.date === todayStr && t.time) {
                 const [tHour, tMin] = t.time.split(':').map(Number);
                 const taskTimeObj = new Date(); taskTimeObj.setHours(tHour, tMin, 0, 0);
                 const remainingMinutes = (taskTimeObj - now) / 60000;
-                
                 if(remainingMinutes > 0 && remainingMinutes <= 60) {
-                    t.isImminent = true; t.minutesLeft = Math.round(remainingMinutes);
-                    imminentTasks.push(t);
-                    return;
+                    t.isImminent = true; t.minutesLeft = Math.round(remainingMinutes); imminentTasks.push(t); return;
                 }
             }
-            t.isImminent = false;
-            standardTasks.push(t);
+            t.isImminent = false; standardTasks.push(t);
         });
 
-        // Application des tris demandés sur les blocs standard et complétés
         const chronoSort = (a, b) => { if (a.date !== b.date) return a.date.localeCompare(b.date); if (!a.time) return -1; if (!b.time) return 1; return a.time.localeCompare(b.time); };
         const creationSort = (a, b) => b.createdAt - a.createdAt;
 
-        if (sortMode === 'chrono') {
-            standardTasks.sort(chronoSort); completedTodayTasks.sort(chronoSort);
-        } else {
-            standardTasks.sort(creationSort); completedTodayTasks.sort(creationSort);
-        }
-        
-        // Tri interne des urgences violettes (La plus proche de la fin tout en haut)
+        if (sortMode === 'chrono') { standardTasks.sort(chronoSort); completedTodayTasks.sort(chronoSort); } 
+        else { standardTasks.sort(creationSort); completedTodayTasks.sort(creationSort); }
         imminentTasks.sort((a,b) => a.minutesLeft - b.minutesLeft);
-
-        // RECONSTITUTION DE LA LISTE FINALISÉE (Urgence Violette > Tâches normales > Tâches cochées du jour)
         filteredList = [...imminentTasks, ...standardTasks, ...completedTodayTasks];
     } else {
-        // Mode Archives : Triées simplement de la plus récente archivée à la plus ancienne
         filteredList.sort((a,b) => b.createdAt - a.createdAt);
     }
 
-    // INTERFACE DE RENDU
     if(filteredList.length === 0) {
-        c.innerHTML = `<p style="text-align:center; opacity:0.4; font-style:italic; margin-top:30px;">${taskSubView==='active'?'Aucune tâche active !':'Vos archives sont vides'}</p>`;
-        return;
+        c.innerHTML = `<p style="text-align:center; opacity:0.4; font-style:italic; margin-top:30px;">${taskSubView==='active'?'Aucune tâche active !':'Vos archives sont vides'}</p>`; return;
     }
 
     filteredList.forEach(t => {
-        const d = document.createElement('div');
-        // Injecte la classe "is-imminent" si moins d'une heure restante
-        d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''} ${t.isImminent ? 'is-imminent' : ''}`;
-        
-        let remindersText = "Aucun";
-        if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
-        
+        const d = document.createElement('div'); d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''} ${t.isImminent ? 'is-imminent' : ''}`;
+        let remindersText = "Aucun"; if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
         d.innerHTML = `
             <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
                 <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
@@ -319,15 +289,11 @@ function renderTasks() {
 
 function toggleTaskCheck(id, currentStatus) { 
     let updateData = { completed: !currentStatus };
-    if(!currentStatus) {
-        updateData.completedAtStr = todayStr; // Marque la date de complétion textuelle pour l'archivage du lendemain
-    } else {
-        updateData.completedAtStr = firebase.firestore.FieldValue.delete(); // Supprime si décochée
-    }
+    if(!currentStatus) { updateData.completedAtStr = todayStr; } else { updateData.completedAtStr = firebase.firestore.FieldValue.delete(); }
     db.collection("tasks").doc(id).update(updateData); 
 }
 
-function deleteTask(id) { db.collection("tasks").doc(id).delete(); }
+function deleteTask(id) { db.collection("tasks").doc(id).delete().then(() => { showToast("Tâche supprimée ! 🗑️"); }); }
 
 function editTask(id) {
     const task = tasks.find(t => t.id === id);
@@ -345,13 +311,25 @@ document.getElementById('save-task').onclick = () => {
     const reminders = getSelectedRemindersFromBadges(); 
     if(n && d && currentUser) {
         let taskData = { name: n, date: d, time: time, reminders: reminders, importance: imp };
-        if(editingId) { db.collection("tasks").doc(editingId).update(taskData); editingId = null; } 
-        else { taskData.completed = false; taskData.userId = currentUser.uid; taskData.createdAt = Date.now(); db.collection("tasks").add(taskData); }
+        if(editingId) { db.collection("tasks").doc(editingId).update(taskData); editingId = null; showToast("Tâche modifiée ! ✎"); } 
+        else { taskData.completed = false; taskData.userId = currentUser.uid; taskData.createdAt = Date.now(); db.collection("tasks").add(taskData); showToast("Tâche ajoutée ! ✨"); }
         document.getElementById('task-modal').style.display = 'none';
     }
 };
 
-// --- ONGLET : CALENDRIER ---
+// --- ONTLET : CONNEXIONS ---
+document.getElementById('btn-login').onclick = () => {
+    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
+    if(email && pass) auth.signInWithEmailAndPassword(email, pass).then(() => { showToast("Ravi de vous revoir ! 👋"); }).catch(err => showToast("Erreur : " + err.message));
+};
+document.getElementById('btn-register').onclick = () => {
+    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
+    if(email && pass) auth.createUserWithEmailAndPassword(email, pass).then(() => showToast("Compte créé avec succès ! 🎉")).catch(err => showToast("Erreur : " + err.message));
+};
+document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
+document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
+
+// --- ONTLET : CALENDRIER ---
 function setViewState(s) { viewState = s; renderCalendar(); }
 function renderCalendar() {
     const c = document.getElementById('calendar-content'); const t = document.getElementById('calendar-title'); c.innerHTML = '';
@@ -394,7 +372,9 @@ function openCalendarDayModal(day, monthName, year, dayTasks) {
     const container = document.getElementById('cal-modal-tasks-container'); container.innerHTML = '';
     if(dayTasks.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche</p>'; } 
     else {
-        dayTasks.forEach(t => { container.innerHTML += `<div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;"><strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}</div>`; });
+        dayTasks.forEach(t => { container.innerHTML += `
+            <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;"><strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}</div>`; 
+        });
     }
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
@@ -459,19 +439,4 @@ document.getElementById('add-task-btn').onclick = () => { editingId = null; docu
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
 
-// Logique de clic externe
 window.onclick = (e) => { if(e.target.className.includes('modal')) { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; document.getElementById('welcome-modal').style.display = 'none'; } };
-
-// Fonction d'affichage d'un Toast personnalisé et élégant
-function showToast(message) {
-    const toast = document.getElementById('toast-notification');
-    if (!toast) return;
-    
-    toast.innerText = message;
-    toast.className = "toast-show"; // Déclenche l'apparition fluide
-    
-    // Disparaît automatiquement après 3 secondes
-    setTimeout(() => {
-        toast.className = "toast-hidden";
-    }, 3000);
-}
