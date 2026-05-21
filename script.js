@@ -275,8 +275,8 @@ document.getElementById('btn-register').onclick = () => {
 document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
 
-// --- ONTLET : CALENDRIER ---
-function setViewState(s) { viewState = s; renderCalendar(); }
+// --- ONGLETS : CALENDRIER ---
+setViewState = function(s) { viewState = s; renderCalendar(); }
 function renderCalendar() {
     const c = document.getElementById('calendar-content'); const t = document.getElementById('calendar-title'); c.innerHTML = '';
     if (!c) return;
@@ -318,13 +318,15 @@ function openCalendarDayModal(day, monthName, year, dayTasks) {
     const container = document.getElementById('cal-modal-tasks-container'); container.innerHTML = '';
     if(dayTasks.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche</p>'; } 
     else {
-        dayTasks.forEach(t => { container.innerHTML += `<div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;"><strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}</div>`; });
+        dayTasks.forEach(t => { container.innerHTML += `
+            <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;"><strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}</div>`; 
+        });
     }
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
 
 // --- ONGLET : TO-DO LIST ---
-function setTodoMode(m) { todoMode = m; renderTodo(); }
+setTodoMode = function(m) { todoMode = m; renderTodo(); }
 function renderTodo() {
     const c = document.getElementById('todo-content'); if (!c) return;
     document.querySelectorAll('#todo-page .bubble').forEach(b => b.classList.remove('active'));
@@ -396,8 +398,8 @@ document.getElementById('save-todo').onclick = () => {
     }
 };
 
-function openTodoModal(time, isWeekly, dayNum = 1) { editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = ''; document.getElementById('todo-modal-title').innerText = "Ajouter au planning"; if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; } document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
-function editTodoItem(id, name, time, isWeekly, dayNum = 1) { editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name; document.getElementById('todo-modal-title').innerText = "Modifier le planning"; if(isWeekly) document.getElementById('todo-day-select').value = dayNum; document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
+openTodoModal = function(time, isWeekly, dayNum = 1) { editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = ''; document.getElementById('todo-modal-title').innerText = "Ajouter au planning"; if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; } document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
+editTodoItem = function(id, name, time, isWeekly, dayNum = 1) { editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name; document.getElementById('todo-modal-title').innerText = "Modifier le planning"; if(isWeekly) document.getElementById('todo-day-select').value = dayNum; document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
 
 // --- INITIALISATION GENERALE ---
 document.getElementById('add-task-btn').onclick = () => { editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; setSelectedRemindersToBadges([]); document.getElementById('task-date').value = todayStr; document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; };
