@@ -86,8 +86,10 @@
             </div>
             <div class="profile-card">
                 <label>Mon Surnom / Prénom</label>
-                <input type="text" id="profile-nickname" placeholder="Ex: WeriXx, Julie...">
-                <button id="btn-save-nickname" class="btn-primary btn-validated-click" style="padding: 10px 15px; font-size: 0.9rem;">Enregistrer le surnom</button>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <input type="text" id="profile-nickname" placeholder="Ex: Max, Julie..." style="flex: 1;">
+                    <button id="btn-save-nickname" class="btn-primary btn-validated-click" style="padding: 10px 15px; font-size: 0.9rem; white-space: nowrap;">Enregistrer</button>
+                </div>
                 
                 <hr style="opacity: 0.1; margin: 10px 0;">
                 <p id="profile-user-email" style="font-size: 0.85rem; opacity: 0.6; text-align:center; margin-bottom:10px;"></p>
