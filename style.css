@@ -4,6 +4,7 @@
 :root {
     --primary: #00CED1; --primary-dark: #008B8B;
     --danger: #FF4757; --warning: #FFA502; --success: #2ED573;
+    --urgent-violet: #8E44AD; --urgent-violet-light: #BB8FCE;
 }
 
 /* THÈMES */
@@ -27,7 +28,7 @@ body {
     color: var(--text-color); transition: background 0.3s ease;
 }
 
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title, #todo-modal-title, #cal-modal-date-title, .nav-bubble { font-family: 'Mogra', cursive; }
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title, #todo-modal-title, #cal-modal-date-title, .nav-bubble, .sub-menu-tab { font-family: 'Mogra', cursive; }
 
 /* NAVBAR UNIFIÉE */
 .navbar { 
@@ -49,12 +50,22 @@ body.theme-dark .nav-bubble { background: rgba(255,255,255,0.08); }
 
 main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* TITRES CENTRÉS */
+/* TITRES CENTRÉS & STYLE SOUS-MENUS */
 .header-action { 
     position: relative; display: flex; align-items: center; margin-bottom: 20px; padding: 15px 20px; 
     border-radius: 25px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .header-centered { justify-content: center; text-align: center; }
+
+/* FIX DES SOUS-MENUS "MES TÂCHES" ET "ARCHIVES" */
+.sub-menu-tab {
+    background: none; border: none; color: inherit; font-size: 1.1rem;
+    padding: 6px 14px; cursor: pointer; opacity: 0.4; transition: all 0.2s; position: relative;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+}
+.sub-menu-tab.active { opacity: 1 !important; font-size: 1.15rem; font-weight: bold; border-bottom: 3px solid var(--primary-dark); }
+body.theme-dark .sub-menu-tab.active { border-bottom-color: var(--primary); }
+body.theme-ocean .sub-menu-tab.active { border-bottom-color: var(--primary); }
 
 .action-bar-left { display: flex; justify-content: flex-start; margin-bottom: 20px; padding-left: 5px; }
 
@@ -64,7 +75,7 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
     cursor: pointer; box-shadow: 0 4px 12px rgba(0, 206, 209, 0.3);
 }
 
-/* REBOND TACTILE AU CLIC PILE SUR LES TOUCHES */
+/* REBOND TACTILE */
 .btn-validated-click { transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.4) !important; }
 .btn-validated-click:active { transform: scale(0.90) !important; filter: brightness(0.9); }
 
@@ -83,7 +94,7 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 /* CARTES ET BLOCS */
 .task-card, .profile-card, .schedule-container, .grid-item, .day-card, .modal-content, .weekly-day-card { background: var(--card-bg) !important; color: var(--text-color); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-/* DESIGN DES TÂCHES STANDARD (Anti-surlignage inclus) */
+/* DESIGN DES TÂCHES STANDARD */
 .task-card { 
     padding: 18px 20px; 
     margin-bottom: 15px; 
@@ -92,14 +103,30 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
     justify-content: space-between; 
     align-items: center; 
     transition: all 0.3s ease;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
 }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
+
+/* MODE TÂCHE IMMINENTE (VIOLET) */
+.task-card.is-imminent {
+    border-left-color: var(--urgent-violet) !important;
+    background: linear-gradient(135deg, var(--card-bg), rgba(142, 68, 173, 0.08)) !important;
+    box-shadow: 0 4px 18px rgba(142, 68, 173, 0.25) !important;
+    border: 1px solid rgba(142, 68, 173, 0.2);
+    animation: pulseUrgentViolet 2.5s infinite ease-in-out;
+}
+.task-card.is-imminent small.time-alert { color: var(--urgent-violet) !important; font-weight: bold; animation: flashText 1.5s infinite alternate; }
+body.theme-dark .task-card.is-imminent { background: linear-gradient(135deg, #1e1e1e, rgba(142, 68, 173, 0.15)) !important; }
+body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2c3e50, rgba(142, 68, 173, 0.18)) !important; }
+
+@keyframes pulseUrgentViolet {
+    0% { box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2); }
+    50% { box-shadow: 0 4px 22px rgba(142, 68, 173, 0.45); border-color: var(--urgent-violet-light); }
+    100% { box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2); }
+}
+@keyframes flashText { from { opacity: 0.6; } to { opacity: 1; } }
 
 /* BADGES DE RAPPELS */
 .reminder-badges-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 5px; }
@@ -129,4 +156,35 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 .day-card.has-medium { border-bottom: 5px solid var(--warning) !important; }
 .day-card.has-low { border-bottom: 5px solid var(--success) !important; }
 .day-card.is-today { border: 2px solid var(--primary) !important; box-shadow: 0 0 10px rgba(0, 206, 209, 0.4); animation: pulseToday 2s infinite; }
-@keyframes pulseToday { 0% { border-color: var(--primary); } 50% { border-color: var(--primary-dark); box-shadow: 0
+@keyframes pulseToday { 0% { border-color: var(--primary); } 50% { border-color: var(--primary-dark); box-shadow: 0 0 14px rgba(0, 206, 209, 0.7); } 100% { border-color: var(--primary); } }
+
+/* PROFIL & THEMES */
+.theme-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.theme-option { height: 80px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+.theme-option.pink { background: #FAD0C4; }
+.theme-option.dark { background: #1a1a1a; border: 1px solid #333; }
+.theme-option.ocean { background: #1a2a3a; border: 1px solid var(--primary); }
+
+/* MODALS - BASE DE L'APPLI (Glissement du bas) */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: flex-end; }
+.modal-content { width: 100%; padding: 30px; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; }
+input, select { padding: 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.3); background: var(--card-bg); color: var(--text-color); font-size: 1rem; }
+select option { background: var(--card-bg); color: var(--text-color); }
+
+/* MODALS CENTRÉS FIXES (Bienvenue et Calendrier) */
+.modal-center { align-items: center !important; justify-content: center !important; padding: 20px; }
+.content-center { width: 100% !important; max-width: 450px !important; border-radius: 25px !important; animation: popupScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popupScale { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.btn-primary { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+.btn-secondary { background: rgba(128,128,128,0.2); color: inherit; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; text-align: center;}
+
+/* NOTIFICATION TOAST INTERNE */
+#toast-notification {
+    position: fixed; top: 25px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white;
+    padding: 12px 25px; border-radius: 30px; font-size: 0.9rem; font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); z-index: 100000;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none; text-align: center; white-space: nowrap;
+}
+#toast-notification.toast-show { transform: translateX(-50%) translateY(0); opacity: 1; }
