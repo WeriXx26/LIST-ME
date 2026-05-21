@@ -93,10 +93,29 @@
     <div id="task-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Nouvelle Tâche</h3>
-            <label>Nom</label>
-            <input type="text" id="task-name">
-            <label>Date</label>
-            <input type="date" id="task-date">
+            <label>Nom de la tâche</label>
+            <input type="text" id="task-name" placeholder="Ex: Aller courir...">
+            
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                    <label>Date</label>
+                    <input type="date" id="task-date">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                    <label>Heure</label>
+                    <input type="time" id="task-time">
+                </div>
+            </div>
+            
+            <label>Rappel de notification</label>
+            <select id="task-reminder">
+                <option value="none">Aucun rappel</option>
+                <option value="0">À l'heure exacte</option>
+                <option value="5">5 minutes avant</option>
+                <option value="15">15 minutes avant</option>
+                <option value="60">1 heure avant</option>
+            </select>
+
             <label>Importance</label>
             <select id="task-importance">
                 <option value="high">Haute</option>
@@ -112,7 +131,7 @@
 
     <div id="todo-modal" class="modal">
         <div class="modal-content">
-            <h3>Planning</h3>
+            <h3 id="todo-modal-title">Planning</h3>
             <div id="todo-day-selector-block" style="display:none; flex-direction:column; gap:5px;">
                 <label>Jour de la semaine</label>
                 <select id="todo-day-select">
@@ -131,8 +150,17 @@
             <input type="text" id="todo-task-name" placeholder="Tâche...">
             <div class="modal-buttons" style="display:flex; gap:10px; margin-top:10px;">
                 <button id="save-todo" class="btn-primary" style="flex:1;">Ajouter</button>
-                <button onclick="document.getElementById('todo-modal').style.display='none'" class="btn-secondary" style="flex:1;">Annuler</button>
+                <button id="close-todo-modal" class="btn-secondary" style="flex:1;">Annuler</button>
             </div>
+        </div>
+    </div>
+
+    <div id="calendar-day-modal" class="modal">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <h3 id="cal-modal-date-title" style="color: var(--primary); text-align: center; margin-bottom: 5px;"></h3>
+            <div id="cal-modal-tasks-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                </div>
+            <button onclick="document.getElementById('calendar-day-modal').style.display='none'" class="btn-secondary" style="margin-top: 15px; width: 100%;">Fermer</button>
         </div>
     </div>
 
