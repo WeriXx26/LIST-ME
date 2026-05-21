@@ -13,13 +13,14 @@
 
     <nav class="navbar">
         <h1 id="app-logo-title">LIST'ME</h1>
-        <div class="nav-links" id="main-nav" style="display:none;">
-            <button onclick="showPage('tasks')">Tâches</button>
-            <button onclick="showPage('todo')">To-Do List</button>
-            <button onclick="showPage('calendar')">Calendrier</button>
-            <button onclick="showPage('profile')">Profil</button>
-        </div>
     </nav>
+
+    <div class="main-nav-container" id="main-nav" style="display:none;">
+        <button class="nav-bubble active" id="nav-btn-tasks" onclick="showPage('tasks')">Tâches</button>
+        <button class="nav-bubble" id="nav-btn-todo" onclick="showPage('todo')">Planning</button>
+        <button class="nav-bubble" id="nav-btn-calendar" onclick="showPage('calendar')">Calendrier</button>
+        <button class="nav-bubble" id="nav-btn-profile" onclick="showPage('profile')">Profil</button>
+    </div>
 
     <main id="app">
         <section id="auth-page">
@@ -44,9 +45,9 @@
         </section>
 
         <section id="tasks-page" style="display:none;">
-            <div class="header-action">
+            <div class="header-action header-centered">
                 <h2>Mes Tâches</h2>
-                <button id="add-task-btn">Ajouter</button>
+                <button id="add-task-btn" style="position: absolute; right: 20px;">Ajouter</button>
             </div>
             <div id="task-list"></div>
         </section>
@@ -71,7 +72,7 @@
         </section>
 
         <section id="profile-page" style="display:none;">
-            <div class="header-action">
+            <div class="header-action header-centered">
                 <h2>Mon Profil</h2>
             </div>
             <div class="profile-card">
@@ -84,7 +85,7 @@
                 <button id="btn-logout" class="btn-secondary" style="background:var(--danger); color:white;">Se déconnecter</button>
             </div>
 
-            <div class="header-action" style="margin-top: 30px;">
+            <div class="header-action header-centered" style="margin-top: 30px;">
                 <h2>Thèmes</h2>
             </div>
             <div class="theme-selector">
@@ -114,7 +115,6 @@
             
             <label>Rappels de notification (Cliquez pour activer)</label>
             <div class="reminder-badges-container">
-                <div class="reminder-badge" data-value="0">À l'heure</div>
                 <div class="reminder-badge" data-value="5">5 min avant</div>
                 <div class="reminder-badge" data-value="15">15 min avant</div>
                 <div class="reminder-badge" data-value="60">1h avant</div>
