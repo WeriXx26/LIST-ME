@@ -4,6 +4,7 @@
 :root {
     --primary: #00CED1; --primary-dark: #008B8B;
     --danger: #FF4757; --warning: #FFA502; --success: #2ED573;
+    --urgent-violet: #8E44AD; --urgent-violet-light: #BB8FCE;
 }
 
 /* THÈMES */
@@ -22,7 +23,7 @@ body {
     color: var(--text-color); transition: background 0.3s ease;
 }
 
-.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title, #todo-modal-title, #cal-modal-date-title, .nav-bubble { font-family: 'Mogra', cursive; }
+.navbar h1, h2, h3, .calendar-title, #add-task-btn, .bubble, #modal-title, .time-label, .theme-option, .weekly-day-title, #todo-modal-title, #cal-modal-date-title, .nav-bubble, .sub-menu-tab { font-family: 'Mogra', cursive; }
 
 /* NAVBAR UNIFIÉE */
 .navbar { 
@@ -43,12 +44,23 @@ body.theme-dark .nav-bubble { background: rgba(255,255,255,0.08); }
 
 main { padding: 20px 15px; max-width: 600px; margin: auto; }
 
-/* TITRES CENTRÉS */
+/* TITRES CENTRÉS & STYLE SOUS-MENUS */
 .header-action { 
     position: relative; display: flex; align-items: center; margin-bottom: 20px; padding: 15px 20px; 
     border-radius: 25px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .header-centered { justify-content: center; text-align: center; }
+
+/* STYLE BOUTONS SOUS-MENUS HAUT DE PAGE */
+.sub-menu-tab {
+    background: none; border: none; color: var(--text-color); font-size: 1.1rem;
+    padding: 6px 14px; cursor: pointer; opacity: 0.4; transition: all 0.2s; position: relative;
+}
+.sub-menu-tab.active {
+    opacity: 1 !important; color: var(--primary-dark); font-size: 1.2rem;
+}
+body.theme-dark .sub-menu-tab.active { color: var(--primary); }
+body.theme-ocean .sub-menu-tab.active { color: var(--primary); }
 
 .action-bar-left { display: flex; justify-content: flex-start; margin-bottom: 20px; padding-left: 5px; }
 
@@ -56,10 +68,9 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
     background: var(--primary); color: white; border: none;
     padding: 12px 22px; border-radius: 30px; font-size: 0.95rem; font-weight: bold;
     cursor: pointer; box-shadow: 0 4px 12px rgba(0, 206, 209, 0.3);
-    transition: transform 0.2s ease, background 0.2s ease;
 }
 
-/* NOUVEAU : ANIMATION UNIVERSELLE DE VALIDATION DE CLIC (REBOND TACTILE) */
+/* ANIMATION TACTILE REBOND */
 .btn-validated-click { transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.4) !important; }
 .btn-validated-click:active { transform: scale(0.90) !important; filter: brightness(0.9); }
 
@@ -77,12 +88,36 @@ main { padding: 20px 15px; max-width: 600px; margin: auto; }
 /* CARTES PRINCIPALES */
 .task-card, .profile-card, .schedule-container, .grid-item, .day-card, .modal-content, .weekly-day-card { background: var(--card-bg) !important; color: var(--text-color); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-/* TÂCHES */
-.task-card { padding: 18px 20px; margin-bottom: 20px; border-left: 12px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
+/* TÂCHES STANDARD */
+.task-card { padding: 18px 20px; margin-bottom: 15px; border-left: 12px solid #ccc; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
 .task-card.high { border-left-color: var(--danger); }
 .task-card.medium { border-left-color: var(--warning); }
 .task-card.low { border-left-color: var(--success); }
-.task-actions { display: flex; gap: 15px; align-items: center; }
+
+/* NOUVEAU STYLE : MODE TÂCHE IMMINENTE (MOINS DE 1H -> SE PLACE EN HAUT EN VIOLET) */
+.task-card.is-imminent {
+    border-left-color: var(--urgent-violet) !important;
+    background: linear-gradient(135deg, var(--card-bg), rgba(142, 68, 173, 0.08)) !important;
+    box-shadow: 0 4px 18px rgba(142, 68, 173, 0.25) !important;
+    border: 1px solid rgba(142, 68, 173, 0.2);
+    animation: pulseUrgentViolet 2.5s infinite ease-in-out;
+}
+.task-card.is-imminent small.time-alert {
+    color: var(--urgent-violet) !important;
+    font-weight: bold;
+    animation: flashText 1.5s infinite alternate;
+}
+body.theme-dark .task-card.is-imminent { background: linear-gradient(135deg, #1e1e1e, rgba(142, 68, 173, 0.15)) !important; }
+body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2c3e50, rgba(142, 68, 173, 0.18)) !important; }
+
+@keyframes pulseUrgentViolet {
+    0% { box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2); }
+    50% { box-shadow: 0 4px 22px rgba(142, 68, 173, 0.45); border-color: var(--urgent-violet-light); }
+    100% { box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2); }
+}
+@keyframes flashText {
+    from { opacity: 0.6; } to { opacity: 1; }
+}
 
 /* BADGES TACTILES */
 .reminder-badges-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 5px; }
