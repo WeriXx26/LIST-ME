@@ -25,7 +25,7 @@ let currentTheme = localStorage.getItem('listme_theme') || 'pink';
 let viewState = 'day'; 
 let todoMode = 'daily';
 let editingId = null;
-let editingTodoId = null; // Pour l'édition de l'agenda
+let editingTodoId = null; 
 let selectedYear = new Date().getFullYear();
 let selectedMonth = new Date().getMonth();
 
@@ -52,12 +52,110 @@ function showPage(p) {
     if(p === 'tasks') renderTasks();
 }
 
+// --- MOTEUR DE NOTIFICATIONS D'ARRIÈRE-PLAN ---
+// Demande de permission au chargement
+function requestNotificationPermission() {
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission !== "granted") {
+                console.log("Notifications bloquées par l'utilisateur.");
+            }
+        });
+    }
+}
+
+// Fonction globale d'envoi de notification
+function sendNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" // Petite icône sympa de liste
+        });
+    }
+}
+
+// Variables pour éviter les doublons de notifications dans la même minute
+let lastCheckedMinute = "";
+let heavyNotificationsSent = JSON.parse(localStorage.getItem('listme_sent_notifs')) || {};
+
+function runNotificationEngine() {
+    const now = new Date();
+    const currentMinuteStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+    
+    if (currentMinuteStr === lastCheckedMinute) return;
+    lastCheckedMinute = currentMinuteStr;
+
+    const todayString = now.toISOString().split('T')[0];
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const dayOfWeek = now.getDay(); // 0 = Dimanche
+
+    // --- 1. NOTIFICATION AUTOMATIQUE : RECAP DU DIMANCHE (Ex: à 18:00) ---
+    if (dayOfWeek === 0 && hour === 18 && minute === 0) {
+        const key = `recap-${todayString}`;
+        if (!heavyNotificationsSent[key]) {
+            const activeTasksCount = tasks.filter(t => !t.completed).length;
+            if (activeTasksCount > 0) {
+                sendNotification("📋 LIST'ME : Récap de ta semaine", `Tu as ${activeTasksCount} tâches prévues au programme pour la semaine qui arrive. Courage !`);
+            } else {
+                sendNotification("📋 LIST'ME : Semaine tranquille !", "Aucune tâche critique de planifiée pour la semaine prochaine.");
+            }
+            heavyNotificationsSent[key] = true;
+            localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
+        }
+    }
+
+    // Boucle sur les tâches pour gérer la veille et le personnalisé
+    tasks.forEach(t => {
+        if (t.completed || !t.date) return;
+
+        const taskDateObj = new Date(t.date);
+        const diffTime = taskDateObj - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // --- 2. NOTIFICATION AUTOMATIQUE : LA VEILLE D'UNE TÂCHE (A 20:00 la veille) ---
+        if (diffDays === 1 && hour === 20 && minute === 0) {
+            const key = `veille-${t.id}`;
+            if (!heavyNotificationsSent[key]) {
+                sendNotification("⏰ Rappel : C'est pour demain !", `Ne pas oublier la tâche : "${t.name}" prévue pour demain.`);
+                heavyNotificationsSent[key] = true;
+                localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
+            }
+        }
+
+        // --- 3. NOTIFICATION PERSONNALISÉE : MULTIPLES RAPPELS ---
+        if (t.time && t.reminders && t.reminders.length > 0) {
+            const [tHour, tMin] = t.time.split(':').map(Number);
+            const taskDateTime = new Date(t.date);
+            taskDateTime.setHours(tHour, tMin, 0, 0);
+
+            const minutesRemaining = Math.round((taskDateTime - now) / 60000);
+
+            t.reminders.forEach(reminderMinutes => {
+                if (minutesRemaining === Number(reminderMinutes)) {
+                    const key = `custom-${t.id}-${reminderMinutes}`;
+                    if (!heavyNotificationsSent[key]) {
+                        let text = reminderMinutes === 0 ? `C'est l'heure !` : `Commence dans ${reminderMinutes} minutes.`;
+                        sendNotification(`🔔 Rappel : ${t.name}`, text);
+                        heavyNotificationsSent[key] = true;
+                        localStorage.setItem('listme_sent_notifs', JSON.stringify(heavyNotificationsSent));
+                    }
+                }
+            });
+        }
+    });
+}
+
+// Lancement du moteur d'arrière-plan (Vérification toutes les 30 secondes)
+setInterval(runNotificationEngine, 30000);
+
 // --- SURVEILLANCE DE L'ÉTAT DE CONNEXION ---
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
         document.getElementById('main-nav').style.display = 'flex';
         document.getElementById('profile-user-email').innerText = user.email;
+        requestNotificationPermission(); // Demander l'accès dès la connexion
         startRealtimeSync(user.uid); 
         showPage('tasks');
     } else {
@@ -111,9 +209,7 @@ function stopRealtimeSync() {
 document.getElementById('btn-login').onclick = () => {
     const email = document.getElementById('auth-email').value;
     const pass = document.getElementById('auth-pass').value;
-    if(email && pass) {
-        auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erreur : " + err.message));
-    }
+    if(email && pass) { auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erreur : " + err.message)); }
 };
 
 document.getElementById('btn-register').onclick = () => {
@@ -141,11 +237,17 @@ function renderTasks() {
     tasks.forEach(t => {
         const d = document.createElement('div');
         d.className = `task-card ${t.importance} ${t.completed ? 'completed' : ''}`;
+        
+        let remindersText = "Aucun";
+        if(t.reminders && t.reminders.length > 0) {
+            remindersText = t.reminders.map(r => r === '0' ? "À l'heure" : `${r} min avant`).join(', ');
+        }
+
         d.innerHTML = `
             <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
                 <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
                 <small>📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
-                ${t.reminder && t.reminder !== 'none' ? `<br><small style="color:var(--primary-dark);">🔔 Rappel : ${t.reminder} min avant</small>` : ''}
+                <br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>
             </div>
             <div class="task-actions">
                 <button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>
@@ -164,7 +266,13 @@ function editTask(id) {
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-date').value = task.date;
         document.getElementById('task-time').value = task.time || "";
-        document.getElementById('task-reminder').value = task.reminder || "none";
+        
+        // Appliquer les choix multiples enregistrés
+        const selectRem = document.getElementById('task-reminder');
+        Array.from(selectRem.options).forEach(opt => {
+            opt.selected = task.reminders ? task.reminders.includes(opt.value) : false;
+        });
+
         document.getElementById('task-importance').value = task.importance;
         document.getElementById('modal-title').innerText = "Modifier la tâche";
         document.getElementById('task-modal').style.display = 'flex';
@@ -175,11 +283,14 @@ document.getElementById('save-task').onclick = () => {
     const n = document.getElementById('task-name').value;
     const d = document.getElementById('task-date').value;
     const time = document.getElementById('task-time').value;
-    const rem = document.getElementById('task-reminder').value;
     const imp = document.getElementById('task-importance').value;
     
+    // Récupération des choix multiples de rappels
+    const selectRem = document.getElementById('task-reminder');
+    const reminders = Array.from(selectRem.selectedOptions).map(opt => opt.value);
+    
     if(n && d && currentUser) {
-        let taskData = { name: n, date: d, time: time, reminder: rem, importance: imp };
+        let taskData = { name: n, date: d, time: time, reminders: reminders, importance: imp };
         if(editingId) {
             db.collection("tasks").doc(editingId).update(taskData);
             editingId = null;
@@ -218,8 +329,6 @@ function renderCalendar() {
         for (let i = 1; i <= days; i++) {
             const ds = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
             const div = document.createElement('div'); div.className = 'day-card';
-            
-            // Surbrillance Aujourd'hui
             if(ds === todayStr) div.classList.add('is-today');
 
             const dt = tasks.filter(tk => tk.date === ds);
@@ -229,22 +338,17 @@ function renderCalendar() {
                 else if(imps.includes('medium')) div.classList.add('has-medium');
                 else div.classList.add('has-low');
             }
-            
-            // Ouverture Modal Customisé à la place de l'alert() moche
             div.onclick = () => openCalendarDayModal(i, monthNames[selectedMonth], selectedYear, dt);
-            
             div.innerHTML = `<span style="font-size:0.6rem; opacity:0.5; display:block;">${dayInitials[new Date(selectedYear, selectedMonth, i).getDay()]}</span><b>${i}</b>`;
             c.appendChild(div);
         }
     }
 }
 
-// Fonction d'ouverture du modal de consultation calendrier esthétique
 function openCalendarDayModal(day, monthName, year, dayTasks) {
     document.getElementById('cal-modal-date-title').innerText = `${day} ${monthName} ${year}`;
     const container = document.getElementById('cal-modal-tasks-container');
     container.innerHTML = '';
-
     if(dayTasks.length === 0) {
         container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche pour ce jour-ci</p>';
     } else {
@@ -259,7 +363,7 @@ function openCalendarDayModal(day, monthName, year, dayTasks) {
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
 
-// --- ONGLET : TO-DO LIST (GRAPHISMES ALIGNÉS SUR L'HEBDO & FIX MINUTES) ---
+// --- ONGLET : TO-DO LIST ---
 function setTodoMode(m) { todoMode = m; renderTodo(); }
 function renderTodo() {
     const c = document.getElementById('todo-content'); if (!c) return;
@@ -268,13 +372,11 @@ function renderTodo() {
     
     if(todoMode === 'daily') {
         document.getElementById('todo-today-date').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
-        c.innerHTML = '<div class="weekly-container"></div>'; // Utilise le container fluide type hebdo
+        c.innerHTML = '<div class="weekly-container"></div>'; 
         const wc = c.querySelector('.weekly-container');
         
         for (let h = 8; h <= 20; h++) {
             const currentHourStr = `${h.toString().padStart(2, '0')}:00`;
-            
-            // Correction Algorithme : On attrape TOUTES les minutes de l'heure h (ex: 08h10 ou 08h45 rentrent dans 08h00)
             let items = dailyTodo.filter(it => it.date === todayStr && parseInt(it.time.split(':')[0]) === h);
             let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && parseInt(it.time.split(':')[0]) === h);
             let combinedItems = [...items, ...weeklyItems];
@@ -291,7 +393,7 @@ function renderTodo() {
                     ${combinedItems.map(it => {
                         const isWeekly = it.hasOwnProperty('dayOfWeek');
                         const checkFunc = isWeekly ? `toggleWeeklyTodo('${it.id}', ${it.completed})` : `toggleTodo('${it.id}', ${it.completed})`;
-                        const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')` : `deleteDailyTodo('${it.id}')`;
+                        const delFunc = isWeekly ? `deleteWeeklyTodo('${it.id}')" ` : `deleteDailyTodo('${it.id}')"`;
                         return `
                             <div class="weekly-item">
                                 <span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer; ${it.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">
@@ -307,7 +409,6 @@ function renderTodo() {
             wc.appendChild(hourCard);
         }
     } else {
-        // --- VUE HEBDO EXISTANTE ET PARFAITE ---
         document.getElementById('todo-today-date').innerText = "Planification Hebdomadaire";
         c.innerHTML = '<div class="weekly-container"></div>';
         const wc = c.querySelector('.weekly-container');
@@ -348,8 +449,7 @@ function openTodoModal(time, isWeekly, dayNum = 1) {
     document.getElementById('todo-task-name').value = '';
     document.getElementById('todo-modal-title').innerText = "Ajouter au planning";
     const selector = document.getElementById('todo-day-selector-block');
-    if(isWeekly) { selector.style.display = 'none'; document.getElementById('todo-day-select').value = dayNum; } 
-    else { selector.style.display = 'none'; }
+    if(isWeekly) { selector.style.display = 'none'; document.getElementById('todo-day-select').value = dayNum; } else { selector.style.display = 'none'; }
     document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly);
     document.getElementById('todo-modal').style.display = 'flex'; 
 }
@@ -378,14 +478,12 @@ document.getElementById('save-todo').onclick = () => {
     
     if(n && t && currentUser) { 
         if(editingTodoId) {
-            // Logique de modification
             let collection = isWeekly ? "weeklyTodo" : "dailyTodo";
             let updateData = { name: n, time: t };
             if(isWeekly) updateData.dayOfWeek = document.getElementById('todo-day-select').value;
             db.collection(collection).doc(editingTodoId).update(updateData);
             editingTodoId = null;
         } else {
-            // Logique d'ajout
             if(isWeekly) {
                 const daySelect = document.getElementById('todo-day-select').value;
                 db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: daySelect, completed: false, userId: currentUser.uid });
@@ -400,13 +498,9 @@ document.getElementById('save-todo').onclick = () => {
 
 // --- INITIALISATION GENERALE ---
 document.getElementById('add-task-btn').onclick = () => { 
-    editingId = null; 
-    document.getElementById('task-name').value = ""; 
-    document.getElementById('task-time').value = ""; 
-    document.getElementById('task-reminder').value = "none"; 
-    document.getElementById('task-date').value = todayStr; 
-    document.getElementById('modal-title').innerText = "Nouvelle Tâche"; 
-    document.getElementById('task-modal').style.display = 'flex'; 
+    editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; 
+    document.getElementById('task-reminder').selectedIndex = -1; document.getElementById('task-date').value = todayStr; 
+    document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; 
 };
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
