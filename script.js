@@ -20,7 +20,7 @@ let dailyTodo = [];
 let weeklyTodo = [];
 let currentUser = null; 
 let userNickname = ""; 
-let hasShownWelcomeThisSession = false; // Permet de n'ouvrir le pop-up qu'une seule fois au lancement
+let hasShownWelcomeThisSession = false; 
 let unsubscribeTasks, unsubscribeDaily, unsubscribeWeekly; 
 
 let currentTheme = localStorage.getItem('listme_theme') || 'pink';
@@ -156,6 +156,7 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('profile-user-email').innerText = user.email;
         requestNotificationPermission();
         
+        // CORRECTION MAJEURE : Chargement impératif et bloquant du surnom avant le reste
         db.collection("users").doc(user.uid).get().then((doc) => {
             if (doc.exists && doc.data().nickname) {
                 userNickname = doc.data().nickname;
@@ -175,7 +176,7 @@ auth.onAuthStateChanged((user) => {
     } else {
         currentUser = null;
         userNickname = "";
-        hasShownWelcomeThisSession = false; // Reset de la session
+        hasShownWelcomeThisSession = false; 
         document.getElementById('main-nav').style.display = 'none';
         document.getElementById('app-logo-title').innerText = "LIST'ME";
         stopRealtimeSync();
@@ -184,6 +185,7 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
+// Enregistrement stable du surnom
 document.getElementById('btn-save-nickname').onclick = () => {
     const nick = document.getElementById('profile-nickname').value.trim();
     if (nick && currentUser) {
@@ -203,8 +205,7 @@ function startRealtimeSync(userId) {
             tasks = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; tasks.push(data); });
             renderTasks(); 
             
-            // Déclenchement automatique unique du Pop-up au chargement des données
-            if (!hasShownWelcomeThisSession && tasks.length >= 0) {
+            if (!hasShownWelcomeThisSession) {
                 triggerWelcomeModal();
                 hasShownWelcomeThisSession = true;
             }
@@ -240,7 +241,7 @@ document.getElementById('btn-register').onclick = () => {
 document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).catch((err) => { alert("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut(); };
 
-// --- NOUVEAU : MOTEUR POP-UP FENÊTRE AUTOMATIQUE DE BIENVENUE ---
+// --- POP-UP CENTRÉ AUTOMATIQUE DE BIENVENUE ---
 function triggerWelcomeModal() {
     const wModal = document.getElementById('welcome-modal');
     const msgText = document.getElementById('welcome-message-text');
@@ -254,7 +255,7 @@ function triggerWelcomeModal() {
     summaryZone.innerHTML = '';
     
     if(todayTasks.length === 0) {
-        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; margin-top: 10px; text-align:center;">Aucune tâche urgente au calendrier aujourd'hui. Profite de ta journée ! ✨</p>`;
+        summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; margin-top: 10px; text-align:center;">Aucune tâche urgente pour aujourd'hui. Profite de ta journée ! ✨</p>`;
     } else {
         summaryZone.innerHTML = `<p style="font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: var(--primary-dark);">Voici tes tâches de la journée :</p>`;
         todayTasks.forEach(t => {
@@ -310,7 +311,6 @@ document.getElementById('save-task').onclick = () => {
     const n = document.getElementById('task-name').value; const d = document.getElementById('task-date').value;
     const time = document.getElementById('task-time').value; const imp = document.getElementById('task-importance').value;
     const reminders = getSelectedRemindersFromBadges(); 
-    
     if(n && d && currentUser) {
         let taskData = { name: n, date: d, time: time, reminders: reminders, importance: imp };
         if(editingId) { db.collection("tasks").doc(editingId).update(taskData); editingId = null; } 
@@ -495,9 +495,8 @@ document.getElementById('add-task-btn').onclick = () => {
 document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
 
-// Modification de la fermeture globale pour intégrer la fermeture du Pop-up automatique au clic extérieur
 window.onclick = (e) => { 
-    if(e.target.className === 'modal') { 
+    if(e.target.className.includes('modal')) { 
         document.getElementById('task-modal').style.display = 'none'; 
         document.getElementById('todo-modal').style.display = 'none'; 
         document.getElementById('calendar-day-modal').style.display = 'none';
