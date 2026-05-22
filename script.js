@@ -221,29 +221,26 @@ function triggerWelcomeModal() {
     wModal.style.display = 'flex';
 }
 
-// --- ONGLET : MES TÂCHES ---
-function renderTasks() {
-    const c = document.getElementById('task-list'); if (!c) return; c.innerHTML = '';
-    const now = new Date();
-    
-    let activeList = []; let archiveList = [];
-    tasks.forEach(t => {
-        if(t.completed) {
-            if(t.completedAtStr && t.completedAtStr !== todayStr) { archiveList.push(t); } else { activeList.push(t); }
-        } else { activeList.push(t); }
-    });
-
-    let filteredList = (taskSubView === "active") ? activeList : archiveList;
-
-    if (taskSubView === "active") {
-        const sortMode = document.getElementById('task-sort-filter').value;
-        let imminentTasks = []; let standardTasks = []; let completedTodayTasks = [];
-
-       filteredList.forEach(t => {
+filteredList.forEach(t => {
         const d = document.createElement('div');
         
-        // SI LA TÂCHE EST COMPLÉTÉE : On génère le design "Bulle Finis !"
-        if (t.completed) {
+        // SI LA TÂCHE EST EN COURS : On garde ton design d'origine avec l'importance et l'imminent
+        if (!t.completed) {
+            d.className = `task-card ${t.importance} ${t.isImminent ? 'is-imminent' : ''}`;
+            let remindersText = "Aucun"; if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
+            d.innerHTML = `
+                <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
+                    <strong>${t.name}</strong><br>
+                    <small>📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
+                    ${t.isImminent ? `<br><small class="time-alert">⚠️ ÉCHÉANCE PROCHE : Reste ${t.minutesLeft} min !</small>` : `<br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>`}
+                </div>
+                <div class="task-actions">
+                    ${taskSubView === 'active' ? `<button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>` : ''}
+                    <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
+                </div>`;
+        } 
+        // SI LA TÂCHE EST VALIDÉE : On applique le nouveau design "Bulle Fini !"
+        else {
             d.className = `task-card completed-bubble`;
             d.innerHTML = `
                 <div style="flex:1; display:flex; flex-direction:column; gap:2px;" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
@@ -252,21 +249,6 @@ function renderTasks() {
                     <small style="opacity:0.5;">📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
                 </div>
                 <div class="task-actions">
-                    <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
-                </div>`;
-        } 
-        // SI LA TÂCHE EST EN COURS : On garde ton design de base avec l'importance et l'imminent
-        else {
-            d.className = `task-card ${t.importance} ${t.isImminent ? 'is-imminent' : ''}`;
-            let remindersText = "Aucun"; if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
-            d.innerHTML = `
-                <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
-                    <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
-                    <small>📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
-                    ${t.isImminent ? `<br><small class="time-alert">⚠️ ÉCHÉANCE PROCHE : Reste ${t.minutesLeft} min !</small>` : `<br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>`}
-                </div>
-                <div class="task-actions">
-                    ${taskSubView === 'active' ? `<button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>` : ''}
                     <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
                 </div>`;
         }
