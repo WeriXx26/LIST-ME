@@ -210,3 +210,19 @@ select option { background: var(--card-bg); color: var(--text-color); }
     transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
+
+/* --- CLASSE DE COMPLÉTION POUR LES ACTIVITÉS DE LA TO-DO LIST --- */
+.weekly-item span {
+    transition: all 0.2s ease;
+}
+
+/* S'applique uniquement sur le texte de l'activité cochée */
+.weekly-item span.todo-completed {
+    text-decoration: line-through !important;
+    opacity: 0.5 !important;
+}
+
+/* Force l'heure en gras (balise b) à se barrer aussi */
+.weekly-item span.todo-completed b {
+    text-decoration: line-through !important;
+}
