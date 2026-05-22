@@ -337,4 +337,6 @@ window.addEventListener('click', (e) => {
         document.getElementById('task-modal').style.display = 'none';
         document.getElementById('todo-modal').style.display = 'none';
     }
+
+console.log("🚀 VERSION DE TEST 2.0 BIEN CHARGÉE !");
 });
