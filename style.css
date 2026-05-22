@@ -218,3 +218,18 @@ select option { background: var(--card-bg); color: var(--text-color); }
 .weekly-item span.todo-completed b {
     text-decoration: line-through !important;
 }
+/* --- BULLE DES TÂCHES TERMINÉES --- */
+.task-card.completed-bubble {
+    border-left: 5px solid #d3d3d3 !important; /* Barre grise neutre */
+    background: rgba(0, 0, 0, 0.03) !important; /* Fond très légèrement grisé */
+    box-shadow: none !important; /* Supprime l'ombre pour montrer qu'elle est archivée */
+}
+
+/* Le petit texte "Fini !" en haut de la bulle */
+.badge-finished {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--success); /* Reprend la couleur verte de ton thème */
+    margin-bottom: 2px;
+    display: inline-block;
+}
