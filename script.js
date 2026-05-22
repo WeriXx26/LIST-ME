@@ -447,7 +447,34 @@ function renderTodo() {
     }
 }
 
-function openTodoModal(time, isWeekly, dayNum = 1) { editingTodoId = null; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = ''; document.getElementById('todo-modal-title').innerText = "Ajouter à la To-Do List"; if(isWeekly) { document.getElementById('todo-day-select').value = dayNum; } document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
+function openTodoModal(time, isWeekly, dayNum = 1) { 
+    editingTodoId = null; 
+    
+    const timeInput = document.getElementById('todo-time');
+    const nameInput = document.getElementById('todo-task-name');
+    const titleInput = document.getElementById('todo-modal-title');
+    const selectorBlock = document.getElementById('todo-day-selector-block');
+    const daySelect = document.getElementById('todo-day-select');
+    const saveBtn = document.getElementById('save-todo');
+
+    if (timeInput) timeInput.value = time; 
+    if (nameInput) nameInput.value = ''; 
+    if (titleInput) titleInput.innerText = "Ajouter à la To-Do List"; 
+    
+    if (selectorBlock) {
+        if (isWeekly) { 
+            if (daySelect) daySelect.value = dayNum; 
+            selectorBlock.style.display = 'flex'; 
+        } else { 
+            selectorBlock.style.display = 'none'; 
+        } 
+    }
+    
+    if (saveBtn) saveBtn.setAttribute('data-weekly-mode', isWeekly); 
+    
+    const modal = document.getElementById('todo-modal');
+    if (modal) modal.style.display = 'flex'; 
+}
 function editTodoItem(id, name, time, isWeekly, dayNum = 1) { editingTodoId = id; document.getElementById('todo-time').value = time; document.getElementById('todo-task-name').value = name; document.getElementById('todo-modal-title').innerText = "Modifier la To-Do List"; if(isWeekly) document.getElementById('todo-day-select').value = dayNum; document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeekly); document.getElementById('todo-modal').style.display = 'flex'; }
 
 function toggleTodo(id, currentStatus) { db.collection("dailyTodo").doc(id).update({ completed: !currentStatus }); }
