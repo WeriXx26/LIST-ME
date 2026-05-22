@@ -154,7 +154,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
 .grid-years, .grid-months { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 15px; }
 .grid-item { padding: 20px 5px; text-align: center; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
-.grid-item.selected { background: var(--primary); color: white; }
+.grid-item.selected { background: var(--primary) !important; color: white !important; }
 
 .day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); position: relative; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 .day-card.has-high { border-bottom: 5px solid var(--danger) !important; }
