@@ -332,9 +332,10 @@ function renderTasks() {
                     ${t.isImminent ? `<br><small class="time-alert">⚠️ ÉCHÉANCE PROCHE : Reste ${t.minutesLeft} min !</small>` : `<br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>`}
                 </div>
                 <div class="task-actions">
-                    ${taskSubView === 'active' ? `<button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>` : ''}
-                    <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
-                </div>`;
+                  ${taskSubView === 'active' ? `<button onclick="duplicateTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.2rem; cursor:pointer; margin-right:5px;">📑</button>` : ''}
+                  ${taskSubView === 'active' ? `<button onclick="editTask('${t.id}')" style="background:none; border:none; color:var(--primary); font-size:1.3rem; cursor:pointer;">✎</button>` : ''}
+                  <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
+                </div>
         }
         c.appendChild(d);
     });
@@ -547,6 +548,25 @@ document.getElementById('close-modal').onclick = () => document.getElementById('
 document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
 
 window.onclick = (e) => { if(e.target.className.includes('modal')) { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; document.getElementById('welcome-modal').style.display = 'none'; } };
+
+// --- LOGIQUE DE PRE-REMPLISSAGE POUR DUPLICATION ---
+function duplicateTask(id) {
+    const task = tasks.find(t => t.id === id);
+    if(task) {
+        // On passe l'ID à editingId pour modifier la tâche existante (pas de doublon dans le feed)
+        editingId = id; 
+        
+        document.getElementById('task-name').value = task.name;
+        document.getElementById('task-time').value = task.time || "";
+        document.getElementById('task-date').value = task.date;
+        document.getElementById('task-importance').value = task.importance;
+        setSelectedRemindersToBadges(task.reminders || []);
+        
+        // On change le titre pour savoir qu'on duplique
+        document.getElementById('modal-title').innerText = "Dupliquer dans le calendrier";
+        document.getElementById('task-modal').style.display = 'flex';
+    }
+}
 
 // --- ENREGISTREMENT DU SERVICE WORKER POUR LES NOTIFICATIONS MOBILES ---
 if ('serviceWorker' in navigator) {
