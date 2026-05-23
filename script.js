@@ -68,21 +68,16 @@ function showPage(p) {
     if(p === 'tasks') renderTasks();
 }
 
-// --- MODIFICATION ICI : switchTaskSubView gère l'affichage de la barre de recherche ---
 function switchTaskSubView(view) {
     taskSubView = view;
     document.querySelectorAll('.sub-menu-tab').forEach(b => b.classList.remove('active'));
     const actionBar = document.getElementById('tasks-action-bar');
-    const archiveSearch = document.getElementById('archive-search-bar');
-    
     if(view === 'active') {
         document.getElementById('sub-btn-active-tasks').classList.add('active');
         if(actionBar) actionBar.style.display = 'flex';
-        if(archiveSearch) archiveSearch.style.display = 'none'; // Masqué dans "En cours"
     } else {
         document.getElementById('sub-btn-archived-tasks').classList.add('active');
         if(actionBar) actionBar.style.display = 'none';
-        if(archiveSearch) archiveSearch.style.display = 'flex'; // Affiché dans "Archives"
     }
     renderTasks();
 }
@@ -240,14 +235,6 @@ function renderTasks() {
 
     let filteredList = (taskSubView === "active") ? activeList : archiveList;
 
-    // --- MODIFICATION ICI : Prise en compte du filtre par date sur les archives ---
-    if (taskSubView === "archive") {
-        const dateFilterValue = document.getElementById('archive-date-filter').value;
-        if (dateFilterValue) {
-            filteredList = filteredList.filter(t => t.date === dateFilterValue);
-        }
-    }
-
     if (taskSubView === "active") {
         const sortMode = document.getElementById('task-sort-filter').value;
         let imminentTasks = []; let standardTasks = []; let completedTodayTasks = [];
@@ -277,12 +264,13 @@ function renderTasks() {
     }
 
     if(filteredList.length === 0) {
-        c.innerHTML = `<p style="text-align:center; opacity:0.4; font-style:italic; margin-top:30px;">${taskSubView==='active'?'Aucune tâche active !':'Aucune archive ne correspond'}</p>`; return;
+        c.innerHTML = `<p style="text-align:center; opacity:0.4; font-style:italic; margin-top:30px;">${taskSubView==='active'?'Aucune tâche active !':'Vos archives sont vides'}</p>`; return;
     }
 
     let separatorDrawn = false;
 
     filteredList.forEach(t => {
+        // Injection de la ligne de séparation avant la première tâche finie
         if (t.completed && taskSubView === "active" && !separatorDrawn) {
             const separator = document.createElement('div');
             separator.className = 'task-section-separator';
@@ -492,7 +480,7 @@ function toggleWeeklyTodo(id, currentStatus) { db.collection("weeklyTodo").doc(i
 function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete(); }
 function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete(); }
 
-// --- ACTION ENREGISTRER DANS LA TO-DO LIST ---
+// --- ACTION ENREGISTRER DANS LA TO-DO LIST (CORRIGÉE CHIRURGICALEMENT) ---
 document.getElementById('save-todo').onclick = () => {
     const n = document.getElementById('todo-task-name').value.trim(); 
     const t = document.getElementById('todo-time').value;
