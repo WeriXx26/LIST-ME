@@ -148,7 +148,22 @@ let lastCheckedMinute = "";
 setInterval(runNotificationEngine, 30000);
 
 function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission(); } }
-function sendNotification(title, body) { if ("Notification" in window && Notification.permission === "granted") { new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" }); } }
+function sendNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        // Si on est sur mobile avec le Service Worker actif
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: body,
+                    icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png"
+                });
+            });
+        } else {
+            // Version classique pour PC
+            new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" });
+        }
+    }
+}
 
 // --- BADGES DE RAPPEL ---
 document.querySelectorAll('.reminder-badge').forEach(badge => { badge.onclick = () => { badge.classList.toggle('active'); }; });
