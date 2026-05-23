@@ -149,6 +149,7 @@ setInterval(runNotificationEngine, 30000);
 
 function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission(); } }
 
+// Système hybride de notifications (PC + Mobile via SW)
 function sendNotification(title, body) {
     if ("Notification" in window && Notification.permission === "granted") {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -312,7 +313,7 @@ function renderTasks() {
 
         const d = document.createElement('div');
         
-        // Effet de superposition visuelle s'il s'agit d'une tâche de Semaine Type dupliquée
+        // Superposition visuelle : Petite étiquette si la tâche est multi-dates (Semaine Type)
         const isDuplicatedVisual = (t.duplicateDays && t.duplicateDays.length > 0) ? '<span class="badge-duplicated" style="margin-left:5px; font-size:0.75rem; vertical-align:middle; background:var(--primary); color:white; padding:2px 6px; border-radius:10px; font-weight:bold;">📑 Dupliqué</span>' : '';
 
         if (t.completed) {
@@ -391,7 +392,7 @@ document.getElementById('btn-register').onclick = () => {
 document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
 
-// --- ONGLET : CALENDRIER ---
+// --- ONGLET : CALENDRIER MULTI-DATES ---
 function setViewState(s) { viewState = s; renderCalendar(); }
 function renderCalendar() {
     const c = document.getElementById('calendar-content'); const t = document.getElementById('calendar-title'); c.innerHTML = '';
@@ -417,32 +418,43 @@ function renderCalendar() {
             const div = document.createElement('div'); div.className = 'day-card';
             if(ds === todayStr) div.classList.add('is-today');
 
-            // Calculateur intelligent : On filtre si le jour correspond à la date fixe OU au jour de la semaine type dupliqué
-            const targetDayOfWeek = new Date(selectedYear, selectedMonth, i).getDay().toString();
+            // Analyseur multi-dates : Filtrage dynamique pour inclure les répétitions de la semaine type
+            const targetDateObj = new Date(selectedYear, selectedMonth, i);
+            const targetDayOfWeek = targetDateObj.getDay().toString();
+
             const dt = tasks.filter(tk => {
                 const isExactDate = tk.date === ds;
                 const isDuplicatedDay = tk.duplicateDays && tk.duplicateDays.includes(targetDayOfWeek);
-                return isExactDate || isDuplicatedDay;
+                const isAfterCreation = tk.createdAt ? targetDateObj >= new Date(tk.createdAt) : true;
+                
+                return isExactDate || (isDuplicatedDay && isAfterCreation);
             });
 
             if(dt.length > 0) {
                 const imps = dt.map(tk => tk.importance);
                 if(imps.includes('high')) div.classList.add('has-high'); else if(imps.includes('medium')) div.classList.add('has-medium'); else div.classList.add('has-low');
             }
-            div.onclick = () => openCalendarDayModal(i, monthNames[selectedMonth], selectedYear, dt);
-            div.innerHTML = `<span style="font-size:0.6rem; opacity:0.5; display:block;">${dayInitials[new Date(selectedYear, selectedMonth, i).getDay()]}</span><b>${i}</b>`;
+            div.onclick = () => openCalendarDayModal(i, monthNames[selectedMonth], selectedYear, dt, targetDayOfWeek);
+            div.innerHTML = `<span style="font-size:0.6rem; opacity:0.5; display:block;">${dayInitials[targetDateObj.getDay()]}</span><b>${i}</b>`;
             c.appendChild(div);
         }
     }
 }
 
-function openCalendarDayModal(day, monthName, year, dayTasks) {
+function openCalendarDayModal(day, monthName, year, dayTasks, currentDayOfWeekStr) {
     document.getElementById('cal-modal-date-title').innerText = `${day} ${monthName} ${year}`;
     const container = document.getElementById('cal-modal-tasks-container'); container.innerHTML = '';
     if(dayTasks.length === 0) { container.innerHTML = '<p style="text-align:center; opacity:0.5; font-style:italic;">Aucune tâche</p>'; } 
     else {
-        dayTasks.forEach(t => { container.innerHTML += `
-            <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;"><strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}</div>`; 
+        dayTasks.forEach(t => {
+            // Label contextuel pour distinguer visuellement les tâches fixes des routines dupliquées
+            const isFromRoutine = (t.duplicateDays && t.duplicateDays.includes(currentDayOfWeekStr) && t.date !== `${year}-${String(monthNames.indexOf(monthName)+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`) ? ' <small style="opacity:0.6; font-size:0.75rem;">(Routine 📑)</small>' : '';
+            
+            container.innerHTML += `
+                <div style="padding: 12px; border-radius: 12px; border-left: 6px solid var(--${t.importance === 'high'?'danger':t.importance==='medium'?'warning':'success'}); background: rgba(128,128,128,0.05); text-align:left;">
+                    <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong>${isFromRoutine}
+                    ${t.time ? `<span style="float:right; font-size:0.85rem; opacity:0.7;">⏰ ${t.time}</span>`:''}
+                </div>`; 
         });
     }
     document.getElementById('calendar-day-modal').style.display = 'flex';
