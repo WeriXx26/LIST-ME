@@ -281,3 +281,8 @@ select option { background: var(--card-bg); color: var(--text-color); }
 span.todo-completed {
     font-style: italic !important;
 }
+
+/* --- EFFET ITALIQUE POUR LES TÂCHES FINIES (ONGLET TÂCHES) --- */
+.completed-bubble strong {
+    font-style: italic !important;
+}
