@@ -542,13 +542,6 @@ document.getElementById('save-todo').onclick = () => {
     }
 };
 
-// --- INITIALISATION GENERALE ---
-document.getElementById('add-task-btn').onclick = () => { editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; setSelectedRemindersToBadges([]); document.getElementById('task-date').value = todayStr; document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; };
-document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
-document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
-
-window.onclick = (e) => { if(e.target.className.includes('modal')) { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; document.getElementById('welcome-modal').style.display = 'none'; } };
-
 // --- LOGIQUE DE PRE-REMPLISSAGE POUR DUPLICATION ---
 function duplicateTask(id) {
     const task = tasks.find(t => t.id === id);
@@ -567,6 +560,13 @@ function duplicateTask(id) {
         document.getElementById('task-modal').style.display = 'flex';
     }
 }
+
+// --- INITIALISATION GENERALE ---
+document.getElementById('add-task-btn').onclick = () => { editingId = null; document.getElementById('task-name').value = ""; document.getElementById('task-time').value = ""; setSelectedRemindersToBadges([]); document.getElementById('task-date').value = todayStr; document.getElementById('modal-title').innerText = "Nouvelle Tâche"; document.getElementById('task-modal').style.display = 'flex'; };
+document.getElementById('close-modal').onclick = () => document.getElementById('task-modal').style.display = 'none';
+document.getElementById('close-todo-modal').onclick = () => document.getElementById('todo-modal').style.display = 'none';
+
+window.onclick = (e) => { if(e.target.className.includes('modal')) { document.getElementById('task-modal').style.display = 'none'; document.getElementById('todo-modal').style.display = 'none'; document.getElementById('calendar-day-modal').style.display = 'none'; document.getElementById('welcome-modal').style.display = 'none'; } };
 
 // --- ENREGISTREMENT DU SERVICE WORKER POUR LES NOTIFICATIONS MOBILES ---
 if ('serviceWorker' in navigator) {
