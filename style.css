@@ -134,7 +134,7 @@ body.theme-ocean .sub-menu-tab.active { color: var(--primary); }
     background: var(--card-bg);
     border-radius: 20px;
     border: 1px solid rgba(128, 128, 128, 0.15);
-    border-left: inherit; /* Reprend la tranche de couleur (Rouge, Jaune, Vert) de la carte mère */
+    border-left: inherit;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     transform: rotate(1deg);
     opacity: 0.85;
@@ -201,7 +201,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .grid-item { padding: 20px 5px; text-align: center; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 .grid-item.selected { background: var(--primary) !important; color: white !important; }
 
-.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128, 128, 128, 0.1); position: relative; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); position: relative; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 .day-card.has-high { border-bottom: 5px solid var(--danger) !important; }
 .day-card.has-medium { border-bottom: 5px solid var(--warning) !important; }
 .day-card.has-low { border-bottom: 5px solid var(--success) !important; }
@@ -212,15 +212,15 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .profile-card { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
 .profile-card label { font-size: 0.85rem; opacity: 0.8; margin-bottom: -5px; }
 .theme-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-
-/* NETTOYAGE : Retrait de la bordure permanente spécifique sur l'Océan brut */
 .theme-option { height: 80px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; border: 1px solid transparent; }
 .theme-option.pink { background: #FAD0C4; }
 .theme-option.dark { background: #1a1a1a; border: 1px solid #333; }
 .theme-option.ocean { background: #1a2a3a; }
 
-/* RECONGURATION UNIQUE DE L'EFFET DE SELECTION SUR LE BOUTON ACTIF */
-.theme-option.active {
+/* --- DÉTECTION INTELLIGENTE DU CONTOUR DU THÈME SÉLECTIONNÉ --- */
+body.theme-pink .theme-option.pink,
+body.theme-dark .theme-option.dark,
+body.theme-ocean .theme-option.ocean {
     outline: 3px solid #00CED1 !important;
     outline-offset: 3px;
 }
