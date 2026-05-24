@@ -208,7 +208,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .day-card.is-today { border: 2px solid var(--primary) !important; box-shadow: 0 0 10px rgba(0, 206, 209, 0.4); animation: pulseToday 2s infinite; }
 @keyframes pulseToday { 0% { border-color: var(--primary); } 50% { border-color: var(--primary-dark); box-shadow: 0 0 14px rgba(0, 206, 209, 0.7); } 100% { border-color: var(--primary); } }
 
-/* PROFIL */
+/* PROFIL ET SÉLECTEUR DE THÈMES */
 .profile-card { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
 .profile-card label { font-size: 0.85rem; opacity: 0.8; margin-bottom: -5px; }
 .theme-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
@@ -216,6 +216,12 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .theme-option.pink { background: #FAD0C4; }
 .theme-option.dark { background: #1a1a1a; border: 1px solid #333; }
 .theme-option.ocean { background: #1a2a3a; border: 1px solid var(--primary); }
+
+/* --- CORRECTION BUG SÉLECTION THÈMES (UNIFIÉ AVEC .active) --- */
+.theme-option.active {
+    outline: 2px solid #00CED1 !important;
+    outline-offset: 2px;
+}
 
 /* MODALS */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: flex-end; }
