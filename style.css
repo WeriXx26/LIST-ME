@@ -94,7 +94,7 @@ body.theme-ocean .sub-menu-tab.active { color: var(--primary); }
 /* CARTES PRINCIPALES */
 .task-card, .profile-card, .schedule-container, .grid-item, .day-card, .modal-content, .weekly-day-card { background: var(--card-bg) !important; color: var(--text-color); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-/* TÂCHES STANDARD (CORRIGÉ AVEC BLOCAGE SELECTION BLEUE) */
+/* TÂCHES STANDARD */
 .task-card { 
     padding: 18px 20px; 
     margin-bottom: 15px; 
@@ -103,8 +103,6 @@ body.theme-ocean .sub-menu-tab.active { color: var(--primary); }
     justify-content: space-between; 
     align-items: center; 
     transition: all 0.3s ease;
-    
-    /* Supprime définitivement la sélection bleue parasite */
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -143,13 +141,6 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 }
 .reminder-badge.active { background: var(--primary) !important; color: white !important; border-color: var(--primary-dark) !important; box-shadow: 0 3px 10px rgba(0, 206, 209, 0.3); }
 
-/* STYLE DES BADGES MULTI-DATES DE DUPLICATION (SEMAINE TYPE) */
-.day-badge {
-    padding: 6px 12px; border-radius: 15px; background: rgba(128,128,128,0.1); font-size: 0.85rem; font-weight: bold;
-    cursor: pointer; transition: all 0.2s ease; text-align: center; user-select: none; -webkit-user-select: none;
-}
-.day-badge.active { background-color: var(--primary) !important; color: white !important; box-shadow: 0 3px 8px rgba(0, 206, 209, 0.25); }
-
 /* AGENDA COHÉRENT */
 .weekly-day-card { margin-bottom: 15px; padding: 15px 20px; border-left: 5px solid var(--primary); transition: background 0.3s; }
 .weekly-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -181,7 +172,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 
 /* MODALS */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: flex-end; }
-.modal-content { width: 100%; padding: 30px; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; max-height: 90vh; }
+.modal-content { width: 100%; padding: 30px; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; gap: 15px; }
 input, select { padding: 14px; border-radius: 10px; border: 1px solid rgba(128,128,128,0.3); background: var(--card-bg); color: var(--text-color); font-size: 1rem; }
 select option { background: var(--card-bg); color: var(--text-color); }
 
@@ -192,7 +183,7 @@ select option { background: var(--card-bg); color: var(--text-color); }
 .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; }
 .btn-secondary { background: rgba(128,128,128,0.2); color: inherit; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; text-align: center;}
 
-/* --- BULLE DE NOTIFICATION TOAST MODERNE --- */
+/* --- BULLE DE NOTIFICATION TOAST --- */
 #toast-notification {
     position: fixed;
     top: 25px;
@@ -217,7 +208,6 @@ select option { background: var(--card-bg); color: var(--text-color); }
     opacity: 1;
 }
 
-/* --- TO-DO COMPLÉTÉ --- */
 .weekly-item span.todo-completed {
     text-decoration: line-through !important;
     opacity: 0.4 !important;
@@ -226,17 +216,17 @@ select option { background: var(--card-bg); color: var(--text-color); }
     text-decoration: line-through !important;
 }
 
-/* --- BULLE DES TÂCHES TERMINÉES --- */
+/* --- TÂCHES TERMINÉES --- */
 .task-card.completed-bubble {
-    border-left: 5px solid #d3d3d3 !important;
-    background: rgba(0, 0, 0, 0.03) !important;
-    box-shadow: none !important;
+    border-left: 5px solid #d3d3d3 !important; 
+    background: rgba(0, 0, 0, 0.03) !important; 
+    box-shadow: none !important; 
 }
 
 .badge-finished {
     font-size: 0.75rem;
     font-weight: bold;
-    color: var(--success);
+    color: var(--success); 
     margin-bottom: 2px;
     display: inline-block;
 }
@@ -269,9 +259,16 @@ select option { background: var(--card-bg); color: var(--text-color); }
     padding: 0 5px;
 }
 
-/* --- EFFET ITALIQUE --- */
+/* --- ITALIQUE --- */
 .weekly-item span.todo-completed, 
 span.todo-completed,
 .completed-bubble strong {
     font-style: italic !important;
+}
+
+/* --- STYLE POUR LES CHAMPS FIGÉS EN DUPLICATION --- */
+input:disabled, select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background-color: rgba(128, 128, 128, 0.08) !important;
 }
