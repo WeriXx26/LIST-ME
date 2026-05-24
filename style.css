@@ -193,7 +193,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .weekly-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .weekly-day-title { color: var(--primary); font-size: 1.2rem; }
 .weekly-subtasks { display: flex; flex-direction: column; gap: 8px; padding-left: 5px; font-size: 0.95rem; }
-.weekly-item { display: flex; justify-content: space-between; align-items: center; opacity: 0.9; padding: 6px 0; border-bottom: 1px dashed rgba(128,128,128,0.15); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+.weekly-item { display: flex; justify-content: space-between; align-items: center; opacity: 0.9; padding: 6px 0; border-bottom: 1px dashed rgba(128, 128, 128, 0.15); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 
 /* CALENDRIER */
 .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
@@ -201,7 +201,7 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .grid-item { padding: 20px 5px; text-align: center; cursor: pointer; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 .grid-item.selected { background: var(--primary) !important; color: white !important; }
 
-.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); position: relative; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+.day-card { padding: 10px 2px; min-height: 80px; text-align: center; cursor: pointer; border: 1px solid rgba(128, 128, 128, 0.1); position: relative; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
 .day-card.has-high { border-bottom: 5px solid var(--danger) !important; }
 .day-card.has-medium { border-bottom: 5px solid var(--warning) !important; }
 .day-card.has-low { border-bottom: 5px solid var(--success) !important; }
@@ -212,15 +212,17 @@ body.theme-ocean .task-card.is-imminent { background: linear-gradient(135deg, #2
 .profile-card { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
 .profile-card label { font-size: 0.85rem; opacity: 0.8; margin-bottom: -5px; }
 .theme-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-.theme-option { height: 80px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+
+/* NETTOYAGE : Retrait de la bordure permanente spécifique sur l'Océan brut */
+.theme-option { height: 80px; border-radius: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; border: 1px solid transparent; }
 .theme-option.pink { background: #FAD0C4; }
 .theme-option.dark { background: #1a1a1a; border: 1px solid #333; }
-.theme-option.ocean { background: #1a2a3a; border: 1px solid var(--primary); }
+.theme-option.ocean { background: #1a2a3a; }
 
-/* --- CORRECTION BUG SÉLECTION THÈMES (UNIFIÉ AVEC .active) --- */
+/* RECONGURATION UNIQUE DE L'EFFET DE SELECTION SUR LE BOUTON ACTIF */
 .theme-option.active {
-    outline: 2px solid #00CED1 !important;
-    outline-offset: 2px;
+    outline: 3px solid #00CED1 !important;
+    outline-offset: 3px;
 }
 
 /* MODALS */
