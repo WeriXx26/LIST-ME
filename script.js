@@ -18,7 +18,7 @@ const auth = firebase.auth();
 let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
-let routineTodo = []; // Base de données de la Semaine Type
+let routineTodo = []; // Base de données de la Semaine Type Matrix
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
@@ -105,7 +105,7 @@ document.getElementById('task-date').onchange = (e) => {
     }
 };
 
-// --- ONGLET : MES TÂCHES ---
+// --- ONGLET : NAVIGATION PRINCIPALE ---
 function showPage(p) {
     document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
     const target = document.getElementById(`${p}-page`);
@@ -403,7 +403,14 @@ function toggleTaskCheck(id, currentStatus) {
     db.collection("tasks").doc(id).update(updateData); 
 }
 
+function toggleTodo(id, currentStatus) { db.collection("dailyTodo").doc(id).update({ completed: !currentStatus }); }
+function toggleWeeklyTodo(id, currentStatus) { db.collection("weeklyTodo").doc(id).update({ completed: !currentStatus }); }
+function toggleRoutineTodo(id, currentStatus) { db.collection("routineTodo").doc(id).update({ completed: !currentStatus }); }
+
 function deleteTask(id) { db.collection("tasks").doc(id).delete().then(() => { showToast("Tâche supprimée ! 🗑️"); }); }
+function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
+function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
+function deleteRoutineTodo(id) { db.collection("routineTodo").doc(id).delete().then(() => showToast("Supprimé de la semaine type !")); }
 
 function editTask(id) {
     const task = tasks.find(t => t.id === id);
@@ -513,7 +520,7 @@ function openCalendarDayModal(day, monthName, year, dayTasks, currentFullDate) {
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
 
-// --- ONGLET : TO-DO LIST & AUTOMATIONS (COMPLET ET CORRIGÉ) ---
+// --- ONGLET : TO-DO LIST & AUTOMATIONS ---
 function setTodoMode(m) { todoMode = m; renderTodo(); }
 function renderTodo() {
     const c = document.getElementById('todo-content'); if (!c) return;
@@ -540,7 +547,7 @@ function renderTodo() {
             hourCard.innerHTML = `
                 <div class="weekly-day-header">
                     <span class="weekly-day-title">${currentHourStr}</span>
-                    <button onclick="openTodoModal('${h.toString().padStart(2,'0')}:00', false)" style="background:var(--primary); border:none; color:white; border-radius:50%; width:25px; height:25px; font-weight:bold; cursor:pointer;">+</button>
+                    <button onclick="openTodoModal('${h.toString().padStart(2,'0')}:00', false, 0, false)" style="background:var(--primary); border:none; color:white; border-radius:50%; width:25px; height:25px; font-weight:bold; cursor:pointer;">+</button>
                 </div>
                 <div class="weekly-subtasks">
                     ${combinedItems.map(it => {
@@ -681,13 +688,6 @@ function editTodoItem(id, name, time, isWeeklyOrRoutine, dayNum = 1, isRoutine =
     document.getElementById('save-todo').setAttribute('data-routine-mode', isRoutine); 
     document.getElementById('todo-modal').style.display = 'flex'; 
 }
-
-function toggleTodo(id, currentStatus) { db.collection("dailyTodo").doc(id).update({ completed: !currentStatus }); }
-function toggleWeeklyTodo(id, currentStatus) { db.collection("weeklyTodo").doc(id).update({ completed: !currentStatus }); }
-function toggleRoutineTodo(id, currentStatus) { db.collection("routineTodo").doc(id).update({ completed: !currentStatus }); }
-function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
-function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
-function deleteRoutineTodo(id) { db.collection("routineTodo").doc(id).delete().then(() => showToast("Supprimé de la semaine type !")); }
 
 // --- ACTION ENREGISTRER DANS LA TO-DO LIST / SEMAINE TYPE ---
 document.getElementById('save-todo').onclick = () => {
