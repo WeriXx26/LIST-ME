@@ -272,6 +272,13 @@ function startRealtimeSync(userId) {
         });
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { dailyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; dailyTodo.push(data); }); renderTodo(); });
     unsubscribeWeekly = db.collection("weeklyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { weeklyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; weeklyTodo.push(data); }); renderTodo(); });
+    
+    // Écoute de la nouvelle collection Semaine Type
+    db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { 
+        routineTodo = []; 
+        snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; routineTodo.push(data); }); 
+        renderTodo(); 
+    });
 }
 
 // --- POP-UP BIENVENUE ---
