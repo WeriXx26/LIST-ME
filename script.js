@@ -18,7 +18,7 @@ const auth = firebase.auth();
 let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
-let routineTodo = []; // La liste de stockage pour ta Semaine Type Matrix
+let routineTodo = []; // Base de données de la Semaine Type
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
@@ -274,7 +274,6 @@ function startRealtimeSync(userId) {
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { dailyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; dailyTodo.push(data); }); renderTodo(); });
     unsubscribeWeekly = db.collection("weeklyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { weeklyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; weeklyTodo.push(data); }); renderTodo(); });
     
-    // Écoute en temps réel de ta nouvelle collection Matrix Semaine Type
     db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { 
         routineTodo = []; 
         snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; routineTodo.push(data); }); 
@@ -459,7 +458,7 @@ document.getElementById('btn-register').onclick = () => {
     const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
     if(email && pass) auth.createUserWithEmailAndPassword(email, pass).then(() => showToast("Compte créé avec succès ! 🎉")).catch(err => showToast("Erreur : " + err.message));
 };
-document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
+document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Googleies réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
 
 // --- ONGLET : CALENDRIER MULTI-DATES ---
@@ -686,11 +685,11 @@ function editTodoItem(id, name, time, isWeeklyOrRoutine, dayNum = 1, isRoutine =
 function toggleTodo(id, currentStatus) { db.collection("dailyTodo").doc(id).update({ completed: !currentStatus }); }
 function toggleWeeklyTodo(id, currentStatus) { db.collection("weeklyTodo").doc(id).update({ completed: !currentStatus }); }
 function toggleRoutineTodo(id, currentStatus) { db.collection("routineTodo").doc(id).update({ completed: !currentStatus }); }
-function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete(); }
-function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete(); }
-function deleteRoutineTodo(id) { db.collection("routineTodo").doc(id).delete(); }
+function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
+function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
+function deleteRoutineTodo(id) { db.collection("routineTodo").doc(id).delete().then(() => showToast("Supprimé de la semaine type !")); }
 
-// --- ACTION ENREGISTRER DANS LA TO-DO LIST / SEMAINE TYPE ---
+// --- ACTION ENREGISTRER CORRIGÉE AVEC VARIABLES DYNAMIQUES DE COLLECTION ---
 document.getElementById('save-todo').onclick = () => {
     const n = document.getElementById('todo-task-name').value.trim(); 
     const t = document.getElementById('todo-time').value;
@@ -698,18 +697,19 @@ document.getElementById('save-todo').onclick = () => {
     const isRoutine = document.getElementById('save-todo').getAttribute('data-routine-mode') === 'true';
     
     if(n && t && currentUser) { 
-        let collection = "dailyTodo";
-        if (isWeekly) collection = "weeklyTodo";
-        else if (isRoutine) collection = "routineTodo";
+        let targetCollection = "dailyTodo";
+        if (isWeekly) targetCollection = "weeklyTodo";
+        else if (isRoutine) targetCollection = "routineTodo";
 
         if(editingTodoId) {
             let updateData = { name: n, time: t };
             if(isWeekly || isRoutine) updateData.dayOfWeek = document.getElementById('todo-day-select').value;
-            db.collection(collection).doc(editingTodoId).update(updateData).then(() => {
+            db.collection(targetCollection).doc(editingTodoId).update(updateData).then(() => {
                 showToast(isRoutine ? "Semaine type modifiée ! ⚙️" : "Activité modifiée ! ✎");
             });
             editingTodoId = null;
         } else {
+            // CORRECTION DES COLLECTIONS CIBLES EN CONGRUENCE AVEC FIREBASE
             if(isRoutine) {
                 db.collection("routineTodo").add({ name: n, time: t, dayOfWeek: document.getElementById('todo-day-select').value, completed: false, isRoutine: true, userId: currentUser.uid }).then(() => {
                     showToast("Ajouté à la semaine type ! ⚙️");
@@ -729,7 +729,7 @@ document.getElementById('save-todo').onclick = () => {
     }
 };
 
-// --- INITIALISATION GENERALE ---
+// --- INITIALISATION GENERALE ET BOUTONS EN CONTINU ---
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; 
     unlockModalFields();
