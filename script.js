@@ -458,7 +458,7 @@ document.getElementById('btn-register').onclick = () => {
     const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
     if(email && pass) auth.createUserWithEmailAndPassword(email, pass).then(() => showToast("Compte créé avec succès ! 🎉")).catch(err => showToast("Erreur : " + err.message));
 };
-document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Googleies réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
+document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
 document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
 
 // --- ONGLET : CALENDRIER MULTI-DATES ---
@@ -513,7 +513,7 @@ function openCalendarDayModal(day, monthName, year, dayTasks, currentFullDate) {
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
 
-// --- ONGLET : TO-DO LIST & AUTOMATIONS ---
+// --- ONGLET : TO-DO LIST & AUTOMATIONS (COMPLET ET CORRIGÉ) ---
 function setTodoMode(m) { todoMode = m; renderTodo(); }
 function renderTodo() {
     const c = document.getElementById('todo-content'); if (!c) return;
@@ -689,7 +689,7 @@ function deleteWeeklyTodo(id) { db.collection("weeklyTodo").doc(id).delete().the
 function deleteDailyTodo(id) { db.collection("dailyTodo").doc(id).delete().then(() => showToast("Supprimé !")); }
 function deleteRoutineTodo(id) { db.collection("routineTodo").doc(id).delete().then(() => showToast("Supprimé de la semaine type !")); }
 
-// --- ACTION ENREGISTRER CORRIGÉE AVEC VARIABLES DYNAMIQUES DE COLLECTION ---
+// --- ACTION ENREGISTRER DANS LA TO-DO LIST / SEMAINE TYPE ---
 document.getElementById('save-todo').onclick = () => {
     const n = document.getElementById('todo-task-name').value.trim(); 
     const t = document.getElementById('todo-time').value;
@@ -709,7 +709,6 @@ document.getElementById('save-todo').onclick = () => {
             });
             editingTodoId = null;
         } else {
-            // CORRECTION DES COLLECTIONS CIBLES EN CONGRUENCE AVEC FIREBASE
             if(isRoutine) {
                 db.collection("routineTodo").add({ name: n, time: t, dayOfWeek: document.getElementById('todo-day-select').value, completed: false, isRoutine: true, userId: currentUser.uid }).then(() => {
                     showToast("Ajouté à la semaine type ! ⚙️");
@@ -729,7 +728,7 @@ document.getElementById('save-todo').onclick = () => {
     }
 };
 
-// --- INITIALISATION GENERALE ET BOUTONS EN CONTINU ---
+// --- INITIALISATION GENERALE ET BOUTONS ---
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; 
     unlockModalFields();
