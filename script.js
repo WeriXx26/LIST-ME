@@ -18,6 +18,7 @@ const auth = firebase.auth();
 let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
+let routineTodo = []; // AJOUTÉ : La liste de stockage pour ta Semaine Type Matrix
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
