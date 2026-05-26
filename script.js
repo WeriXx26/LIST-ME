@@ -18,12 +18,12 @@ const auth = firebase.auth();
 let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
-let routineTodo = []; // Base de données de la Semaine Type Matrix
+let routineTodo = []; // Collection dédiée pour la Semaine Type (Option 2 Pro)
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
 let taskSubView = "active"; 
-let unsubscribeTasks, unsubscribeDaily, unsubscribeWeekly; 
+let unsubscribeTasks, unsubscribeDaily, unsubscribeWeekly, unsubscribeRoutine; 
 
 let currentTheme = localStorage.getItem('listme_theme') || 'pink';
 let viewState = 'day'; 
@@ -274,7 +274,8 @@ function startRealtimeSync(userId) {
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { dailyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; dailyTodo.push(data); }); renderTodo(); });
     unsubscribeWeekly = db.collection("weeklyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { weeklyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; weeklyTodo.push(data); }); renderTodo(); });
     
-    db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { 
+    // Écoute de la nouvelle collection dédiée (Option 2)
+    unsubscribeRoutine = db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { 
         routineTodo = []; 
         snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; routineTodo.push(data); }); 
         renderTodo(); 
@@ -295,7 +296,13 @@ function triggerWelcomeModal() {
     wModal.style.display = 'flex';
 }
 
-function stopRealtimeSync() { if (unsubscribeTasks) unsubscribeTasks(); if (unsubscribeDaily) unsubscribeDaily(); if (unsubscribeWeekly) unsubscribeWeekly(); tasks = []; dailyTodo = []; weeklyTodo = []; routineTodo = []; }
+function stopRealtimeSync() { 
+    if (unsubscribeTasks) unsubscribeTasks(); 
+    if (unsubscribeDaily) unsubscribeDaily(); 
+    if (unsubscribeWeekly) unsubscribeWeekly(); 
+    if (unsubscribeRoutine) unsubscribeRoutine(); 
+    tasks = []; dailyTodo = []; weeklyTodo = []; routineTodo = []; 
+}
 
 // --- ONGLET : MES TÂCHES ---
 function renderTasks() {
@@ -602,7 +609,7 @@ function renderTodo() {
                 </div>
                 <div class="weekly-subtasks">
                     ${combinedTasks.map(it => {
-                        const isRoutine = it.hasOwnProperty('isRoutine');
+                        const isRoutine = it.hasOwnProperty('isRoutine') || routineTodo.some(r => r.id === it.id);
                         const checkFunc = isRoutine ? `toggleRoutineTodo('${it.id}', ${it.completed})` : `toggleWeeklyTodo('${it.id}', ${it.completed})`;
                         const delFunc = isRoutine ? `deleteRoutineTodo('${it.id}')` : `deleteWeeklyTodo('${it.id}')`;
                         
