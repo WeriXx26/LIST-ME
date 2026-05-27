@@ -447,6 +447,9 @@ function renderTasks() {
         const isMultiDate = (!t.completed && t.duplicateDays && t.duplicateDays.length > 0);
         const cardStyleClass = isMultiDate ? 'task-card stacked-task' : 'task-card';
         const displayDateStr = t.currentDisplayDate || t.date;
+        
+        // --- NOUVEAU : Formatage en DD/MM/YYYY pour l'affichage ---
+        const displayDateFR = displayDateStr ? displayDateStr.split('-').reverse().join('/') : '';
 
         const d = document.createElement('div');
         
@@ -456,7 +459,7 @@ function renderTasks() {
                 <div style="flex:1; display:flex; flex-direction:column; gap:2px;" onclick="toggleTaskCheck('${t.id}', ${t.completed}, '${displayDateStr}')">
                     <span class="badge-finished">✨ Fini !</span>
                     <strong style="text-decoration:line-through; opacity:0.5;">${t.name}</strong>
-                    <small style="opacity:0.5;">📅 ${displayDateStr} ${t.time ? '⏰ ' + t.time : ''}</small>
+                    <small style="opacity:0.5;">📅 ${displayDateFR} ${t.time ? '⏰ ' + t.time : ''}</small>
                 </div>
                 <div class="task-actions">
                     <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
@@ -468,7 +471,7 @@ function renderTasks() {
             d.innerHTML = `
                 <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed}, '${displayDateStr}')">
                     <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
-                    <small>📅 ${displayDateStr} ${t.time ? '⏰ ' + t.time : ''}</small>
+                    <small>📅 ${displayDateFR} ${t.time ? '⏰ ' + t.time : ''}</small>
                     ${t.isImminent ? `<br><small class="time-alert">⚠️ ÉCHÉANCE PROCHE : Reste ${t.minutesLeft} min !</small>` : `<br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>`}
                 </div>
                 <div class="task-actions">
