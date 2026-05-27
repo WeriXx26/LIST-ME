@@ -18,7 +18,7 @@ const auth = firebase.auth();
 let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
-let routineTodo = []; // Collection dédiée pour la Semaine Type (Option 2 Pro)
+let routineTodo = [];
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
@@ -39,7 +39,6 @@ const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juil
 const dayInitials = ["D", "L", "M", "M", "J", "V", "S"];
 const dayNamesFr = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-// CORRECTION : Changement en 'let' pour permettre la mise à jour automatique à 00h00
 let todayStr = new Date().toISOString().split('T')[0];
 const currentDayOfWeek = new Date().getDay();
 
@@ -91,7 +90,6 @@ function renderDuplicateDateTags() {
     });
 }
 
-// REMOVE DUPLICATE DATE
 function removeDuplicateDate(index) {
     selectedDuplicateDates.splice(index, 1);
     renderDuplicateDateTags();
@@ -141,12 +139,73 @@ function switchTaskSubView(view) {
     renderTasks();
 }
 
+// --- GESTIONNAIRE D'ARCHIVAGE AUTOMATIQUE SÉCURISÉ (À MINUIT OU AU CHARGEMENT) ---
+let isArchiving = false;
+function processMidnightAutoArchive() {
+    if(isArchiving || !currentUser) return;
+    isArchiving = true;
+    
+    const today = new Date().toISOString().split('T')[0];
+    let operations = [];
+    
+    tasks.forEach(t => {
+        if (t.completed) return; // Déjà archivé
+        
+        let isMultiDate = (t.duplicateDays && t.duplicateDays.length > 0);
+        
+        if (isMultiDate) {
+            let allDates = [t.date, ...t.duplicateDays].sort();
+            let pastDates = allDates.filter(d => d < today);
+            let remainingDates = allDates.filter(d => d >= today);
+            
+            if (pastDates.length > 0) {
+                // Créer une archive pour chaque date passée
+                pastDates.forEach(pastDate => {
+                    operations.push(
+                        db.collection("tasks").add({
+                            name: t.name, date: pastDate, time: t.time || "", reminders: t.reminders || [],
+                            importance: t.importance, completed: true, completedAtStr: pastDate, 
+                            userId: t.userId, createdAt: t.createdAt || Date.now(), duplicateDays: []
+                        })
+                    );
+                });
+                
+                if (remainingDates.length > 0) {
+                    // Avancer la tâche à la date suivante
+                    let nextMainDate = remainingDates.shift();
+                    operations.push(
+                        db.collection("tasks").doc(t.id).update({ date: nextMainDate, duplicateDays: remainingDates })
+                    );
+                } else {
+                    // Supprimer la tâche mère si toutes ses dates sont passées et archivées
+                    operations.push(db.collection("tasks").doc(t.id).delete());
+                }
+            }
+        } else {
+            // Tâche simple : Archivage auto si la date est passée
+            if (t.date < today) {
+                operations.push(
+                    db.collection("tasks").doc(t.id).update({ completed: true, completedAtStr: t.date })
+                );
+            }
+        }
+    });
+    
+    Promise.all(operations).then(() => { isArchiving = false; }).catch(() => { isArchiving = false; });
+}
+
 // --- MOTEUR DE VÉRIFICATION EN CONTINU ---
+let lastCheckedDayStr = new Date().toISOString().split('T')[0];
+
 function runNotificationEngine() {
     const now = new Date();
-    
-    // CORRECTION : Réévaluation continue de la date actuelle pour capter le passage à 00h00 en temps réel
     todayStr = now.toISOString().split('T')[0];
+
+    // Auto-archivage exact au passage de minuit
+    if (todayStr !== lastCheckedDayStr) {
+        lastCheckedDayStr = todayStr;
+        processMidnightAutoArchive();
+    }
 
     if(document.getElementById('tasks-page').style.display === 'block') { renderTasks(); }
 
@@ -201,7 +260,6 @@ function runNotificationEngine() {
         }
     });
 }
-let lastCheckedMinute = "";
 setInterval(runNotificationEngine, 30000);
 
 function requestNotificationPermission() { if ("Notification" in window) { Notification.requestPermission(); } }
@@ -210,10 +268,7 @@ function sendNotification(title, body) {
     if ("Notification" in window && Notification.permission === "granted") {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
             navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification(title, {
-                    body: body,
-                    icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png"
-                });
+                registration.showNotification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" });
             });
         } else {
             new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png" });
@@ -238,9 +293,7 @@ auth.onAuthStateChanged((user) => {
             if (doc.exists && doc.data().nickname) {
                 userNickname = doc.data().nickname;
                 document.getElementById('profile-nickname').value = userNickname;
-            } else {
-                userNickname = ""; 
-            }
+            } else { userNickname = ""; }
             startRealtimeSync(user.uid); 
             showPage('tasks');
         }).catch(() => { startRealtimeSync(user.uid); showPage('tasks'); });
@@ -264,7 +317,11 @@ document.getElementById('btn-save-nickname').onclick = () => {
 };
 
 // --- SYNCHRONISATION PRIVÉE FIREBASE ---
+let initialSyncDone = false;
+
 function startRealtimeSync(userId) {
+    initialSyncDone = false; // Reset au démarrage
+    
     unsubscribeTasks = db.collection("tasks").where("userId", "==", userId)
         .onSnapshot((snapshot) => {
             tasks = []; 
@@ -274,53 +331,22 @@ function startRealtimeSync(userId) {
                 tasks.push(data); 
             });
 
-            // --- NOUVEAU BLOCK AUTOMATIQUE : Vérification et Détachement intelligent à Minuit ---
-            let today = new Date().toISOString().split('T')[0];
-            tasks.forEach(t => {
-                if (!t.completed && t.date < today && t.duplicateDays && t.duplicateDays.length > 0) {
-                    let allDates = [t.date, ...t.duplicateDays].sort();
-                    let remainingDates = allDates.filter(d => d !== t.date);
-
-                    // 1. On archive silencieusement l'instance passée non cochée (elle est considérée complétée à son jour J)
-                    db.collection("tasks").add({
-                        name: t.name,
-                        date: t.date,
-                        time: t.time || "",
-                        reminders: t.reminders || [],
-                        importance: t.importance,
-                        completed: true,
-                        completedAtStr: t.date, 
-                        userId: t.userId,
-                        createdAt: t.createdAt,
-                        duplicateDays: []
-                    });
-
-                    // 2. On fait basculer la tâche principale vers la prochaine date future disponible
-                    if (remainingDates.length > 0) {
-                        let nextMainDate = remainingDates.shift();
-                        db.collection("tasks").doc(t.id).update({
-                            date: nextMainDate,
-                            duplicateDays: remainingDates
-                        });
-                    }
-                }
-            });
+            // Lancement de l'archivage auto sécurisé 1 seule fois au démarrage
+            if (!initialSyncDone && tasks.length > 0) {
+                initialSyncDone = true;
+                setTimeout(processMidnightAutoArchive, 1500); 
+            }
 
             renderTasks(); 
             if (!hasShownWelcomeThisSession) { triggerWelcomeModal(); hasShownWelcomeThisSession = true; }
             if(viewState === 'day') renderCalendar();
         });
+        
     unsubscribeDaily = db.collection("dailyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { dailyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; dailyTodo.push(data); }); renderTodo(); });
     unsubscribeWeekly = db.collection("weeklyTodo").where("userId", "==", userId).onSnapshot((snapshot) => { weeklyTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; weeklyTodo.push(data); }); renderTodo(); });
-    
-    unsubscribeRoutine = db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { 
-        routineTodo = []; 
-        snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; routineTodo.push(data); }); 
-        renderTodo(); 
-    });
+    unsubscribeRoutine = db.collection("routineTodo").where("userId", "==", userId).onSnapshot((snapshot) => { routineTodo = []; snapshot.forEach((doc) => { let data = doc.data(); data.id = doc.id; routineTodo.push(data); }); renderTodo(); });
 }
 
-// --- POP-UP BIENVENUE ---
 function triggerWelcomeModal() {
     const wModal = document.getElementById('welcome-modal'); const msgText = document.getElementById('welcome-message-text'); const summaryZone = document.getElementById('today-summary-zone');
     if(!wModal) return;
@@ -358,9 +384,7 @@ function renderTasks() {
 
     if (taskSubView === "archive") {
         const dateFilterValue = document.getElementById('archive-date-filter').value;
-        if (dateFilterValue) {
-            filteredList = filteredList.filter(t => t.date === dateFilterValue);
-        }
+        if (dateFilterValue) { filteredList = filteredList.filter(t => t.date === dateFilterValue); }
     }
 
     if (taskSubView === "active") {
@@ -368,9 +392,17 @@ function renderTasks() {
         let imminentTasks = []; let standardTasks = []; let completedTodayTasks = [];
 
         filteredList.forEach(t => {
+            // Affichage dynamique : On montre la date active pertinente
+            t.currentDisplayDate = t.date;
+            if (!t.completed && t.duplicateDays && t.duplicateDays.length > 0) {
+                let allDates = [t.date, ...t.duplicateDays].sort();
+                let futureDates = allDates.filter(d => d >= todayStr);
+                t.currentDisplayDate = futureDates.length > 0 ? futureDates[0] : allDates[allDates.length - 1];
+            }
+
             if(t.completed) { completedTodayTasks.push(t); return; }
             
-            if(t.date === todayStr && t.time) {
+            if(t.currentDisplayDate === todayStr && t.time) {
                 const [tHour, tMin] = t.time.split(':').map(Number);
                 const taskTimeObj = new Date(); taskTimeObj.setHours(tHour, tMin, 0, 0);
                 const remainingMinutes = (taskTimeObj - now) / 60000;
@@ -382,7 +414,9 @@ function renderTasks() {
         });
 
         const chronoSort = (a, b) => { 
-            if (a.date !== b.date) return a.date.localeCompare(b.date); 
+            let dateA = a.currentDisplayDate || a.date;
+            let dateB = b.currentDisplayDate || b.date;
+            if (dateA !== dateB) return dateA.localeCompare(dateB); 
             if (!a.time) return -1; if (!b.time) return 1; return a.time.localeCompare(b.time); 
         };
         const creationSort = (a, b) => b.createdAt - a.createdAt;
@@ -412,16 +446,17 @@ function renderTasks() {
 
         const isMultiDate = (!t.completed && t.duplicateDays && t.duplicateDays.length > 0);
         const cardStyleClass = isMultiDate ? 'task-card stacked-task' : 'task-card';
+        const displayDateStr = t.currentDisplayDate || t.date;
 
         const d = document.createElement('div');
         
         if (t.completed) {
             d.className = `task-card completed-bubble`;
             d.innerHTML = `
-                <div style="flex:1; display:flex; flex-direction:column; gap:2px;" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
+                <div style="flex:1; display:flex; flex-direction:column; gap:2px;" onclick="toggleTaskCheck('${t.id}', ${t.completed}, '${displayDateStr}')">
                     <span class="badge-finished">✨ Fini !</span>
                     <strong style="text-decoration:line-through; opacity:0.5;">${t.name}</strong>
-                    <small style="opacity:0.5;">📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
+                    <small style="opacity:0.5;">📅 ${displayDateStr} ${t.time ? '⏰ ' + t.time : ''}</small>
                 </div>
                 <div class="task-actions">
                     <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); font-size:1.3rem; cursor:pointer;">×</button>
@@ -431,9 +466,9 @@ function renderTasks() {
             let remindersText = "Aucun"; if(t.reminders && t.reminders.length > 0) { remindersText = t.reminders.map(r => `${r} min avant`).join(', '); }
             
             d.innerHTML = `
-                <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed})">
+                <div style="flex:1" onclick="toggleTaskCheck('${t.id}', ${t.completed}, '${displayDateStr}')">
                     <strong style="${t.completed ? 'text-decoration:line-through; opacity:0.5;' : ''}">${t.name}</strong><br>
-                    <small>📅 ${t.date} ${t.time ? '⏰ ' + t.time : ''}</small>
+                    <small>📅 ${displayDateStr} ${t.time ? '⏰ ' + t.time : ''}</small>
                     ${t.isImminent ? `<br><small class="time-alert">⚠️ ÉCHÉANCE PROCHE : Reste ${t.minutesLeft} min !</small>` : `<br><small style="color:var(--primary-dark);">🔔 Rappels : ${remindersText}</small>`}
                 </div>
                 <div class="task-actions">
@@ -446,45 +481,37 @@ function renderTasks() {
     });
 }
 
-// --- COCHER / DECOCHER UNE TACHE ---
-function toggleTaskCheck(id, currentStatus) { 
+// --- COCHER / DÉCOCHER UNE TÂCHE SÉCURISÉ ---
+function toggleTaskCheck(id, currentStatus, specificDate) { 
     const task = tasks.find(t => t.id === id);
     if(!task) return;
 
     if(!currentStatus) {
-        // Validation manuelle (l'utilisateur coche la tâche avant minuit)
+        // Validation manuelle
         let isMultiDate = (task.duplicateDays && task.duplicateDays.length > 0);
 
-        if (isMultiDate) {
+        if (isMultiDate && specificDate) {
             let allDates = [task.date, ...task.duplicateDays].sort();
-            let remainingDates = allDates.filter(d => d !== task.date);
+            let remainingDates = allDates.filter(d => d !== specificDate);
 
             if (remainingDates.length > 0) {
-                // 1. Clone l'instance validée du jour pour l'envoyer dans les archives
+                // 1. Crée la copie terminée et archivée pour la date cochée
                 db.collection("tasks").add({
-                    name: task.name,
-                    date: task.date,
-                    time: task.time || "",
-                    reminders: task.reminders || [],
-                    importance: task.importance,
-                    completed: true,
-                    completedAtStr: todayStr,
-                    userId: task.userId,
-                    createdAt: task.createdAt,
-                    duplicateDays: []
+                    name: task.name, date: specificDate, time: task.time || "",
+                    reminders: task.reminders || [], importance: task.importance,
+                    completed: true, completedAtStr: todayStr, userId: task.userId,
+                    createdAt: task.createdAt || Date.now(), duplicateDays: []
                 });
 
-                // 2. Fait avancer le document parent à la date suivante
+                // 2. Fait avancer la carte principale à la date suivante
                 let nextMainDate = remainingDates.shift();
                 db.collection("tasks").doc(id).update({
-                    date: nextMainDate,
-                    duplicateDays: remainingDates
+                    date: nextMainDate, duplicateDays: remainingDates
                 });
                 showToast("Instance terminée et archivée ! ✨");
                 return; 
             }
         }
-
         db.collection("tasks").doc(id).update({ completed: true, completedAtStr: todayStr }); 
     } else {
         db.collection("tasks").doc(id).update({ completed: false, completedAtStr: firebase.firestore.FieldValue.delete() }); 
