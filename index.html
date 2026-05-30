@@ -49,7 +49,6 @@
                 <button id="sub-btn-archived-tasks" class="sub-menu-tab" onclick="switchTaskSubView('archive')">Archives</button>
             </div>
 
-            <!-- NOUVEAU FILTRE D'ARCHIVES PAR ORDRE CHRONOLOGIQUE -->
             <div id="archive-search-bar" class="action-bar-left" style="display: none; justify-content: flex-end; align-items: center; width: 100%; margin-bottom: 15px;">
                 <select id="archive-sort-filter" onchange="renderTasks()" style="padding: 10px 15px; font-size: 0.85rem; border-radius: 20px; font-weight: bold; cursor: pointer; border: 1px solid rgba(128,128,128,0.3); background: var(--card-bg); color: var(--text-color);">
                     <option value="desc">⬇️ Plus récentes</option>
@@ -124,7 +123,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE TÂCHE DÉSORMAIS CENTRÉ ET AVEC DESCRIPTIF -->
+    <!-- MODAL DE TÂCHE -->
     <div id="task-modal" class="modal modal-center">
         <div class="modal-content content-center">
             <h3 id="modal-title" style="text-align: center; color: var(--primary-dark); margin-bottom: 5px;">Nouvelle Tâche</h3>
@@ -142,7 +141,11 @@
                 </div>
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
                     <label>Heure</label>
-                    <input type="time" id="task-time">
+                    <div class="custom-time-container">
+                        <input type="number" id="task-time-h" placeholder="-- " inputmode="numeric" min="0" max="23" oninput="if(this.value.length>=2) { this.value = this.value.slice(0,2); document.getElementById('task-time-m').focus(); }" onblur="if(this.value && this.value.length === 1) this.value = '0' + this.value;">
+                        <span style="font-weight:bold; opacity:0.5;">:</span>
+                        <input type="number" id="task-time-m" placeholder="-- " inputmode="numeric" min="0" max="59" oninput="if(this.value.length>2) this.value = this.value.slice(0,2);" onblur="if(this.value && this.value.length === 1) this.value = '0' + this.value;">
+                    </div>
                 </div>
             </div>
 
@@ -168,7 +171,7 @@
         </div>
     </div>
 
-    <!-- MODAL TO-DO DÉSORMAIS CENTRÉ -->
+    <!-- MODAL TO-DO -->
     <div id="todo-modal" class="modal modal-center">
         <div class="modal-content content-center">
             <h3 id="todo-modal-title" style="text-align: center; color: var(--primary-dark); margin-bottom: 5px;">To-Do List</h3>
@@ -184,8 +187,14 @@
                     <option value="0">Dimanche</option>
                 </select>
             </div>
+            
             <label style="margin-top: 5px;">Heure</label>
-            <input type="time" id="todo-time">
+            <div class="custom-time-container">
+                <input type="number" id="todo-time-h" placeholder="-- " inputmode="numeric" min="0" max="23" oninput="if(this.value.length>=2) { this.value = this.value.slice(0,2); document.getElementById('todo-time-m').focus(); }" onblur="if(this.value && this.value.length === 1) this.value = '0' + this.value;">
+                <span style="font-weight:bold; opacity:0.5;">:</span>
+                <input type="number" id="todo-time-m" placeholder="-- " inputmode="numeric" min="0" max="59" oninput="if(this.value.length>2) this.value = this.value.slice(0,2);" onblur="if(this.value && this.value.length === 1) this.value = '0' + this.value;">
+            </div>
+
             <label style="margin-top: 5px;">Activité</label>
             <input type="text" id="todo-task-name" placeholder="Tâche...">
             <div class="modal-buttons" style="display:flex; gap:10px; margin-top:10px;">
