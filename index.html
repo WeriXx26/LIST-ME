@@ -78,14 +78,30 @@
             <div id="todo-content"></div>
         </section>
 
+        <!-- ONGLET CALENDRIER MIS À JOUR -->
         <section id="calendar-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-year" class="bubble" onclick="setViewState('year')">Année</button>
                 <button id="btn-month" class="bubble" onclick="setViewState('month')">Mois</button>
                 <button id="btn-day" class="bubble active" onclick="setViewState('day')">Jours</button>
             </div>
-            <div id="calendar-title" class="calendar-title" style="text-align:center; margin-bottom:15px;"></div>
+            
+            <!-- TITRE ET BOUTON ANNIVERSAIRE -->
+            <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin-bottom:15px; position:relative;">
+                <div id="calendar-title" class="calendar-title" style="margin:0; font-size: 1.5em;"></div>
+                <button onclick="openBirthdayModal()" style="background:var(--birthday-color); border:none; color:white; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:1.1rem; margin-top:-5px;">🎂</button>
+            </div>
+            
             <div id="calendar-content"></div>
+            
+            <!-- LÉGENDE -->
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-dot" style="background:var(--danger)"></span>Haute</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--warning)"></span>Moyenne</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--success)"></span>Faible</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--holiday-color)"></span>Férié</span>
+                <span class="legend-item"><span class="legend-dot" style="background:var(--birthday-color)"></span>Anniversaire</span>
+            </div>
         </section>
 
         <section id="profile-page" style="display:none;">
@@ -200,6 +216,21 @@
             <div class="modal-buttons" style="display:flex; gap:10px; margin-top:10px;">
                 <button id="save-todo" class="btn-primary btn-validated-click" style="flex:1;">Ajouter</button>
                 <button id="close-todo-modal" class="btn-secondary" style="flex:1;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ANNIVERSAIRE -->
+    <div id="birthday-modal" class="modal modal-center">
+        <div class="modal-content content-center">
+            <h3 style="text-align: center; color: var(--birthday-color); margin-bottom: 5px;">Ajouter un Anniversaire 🎂</h3>
+            <label>Prénom / Nom</label>
+            <input type="text" id="birthday-name" placeholder="Ex: Maman, Thomas...">
+            <label style="margin-top: 5px;">Date de naissance</label>
+            <input type="date" id="birthday-date">
+            <div class="modal-buttons" style="display:flex; gap:10px; margin-top:10px;">
+                <button id="save-birthday" class="btn-primary btn-validated-click" style="flex:1; background:var(--birthday-color);">Enregistrer</button>
+                <button onclick="document.getElementById('birthday-modal').style.display='none'" class="btn-secondary" style="flex:1;">Annuler</button>
             </div>
         </div>
     </div>
