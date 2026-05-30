@@ -78,7 +78,6 @@
             <div id="todo-content"></div>
         </section>
 
-        <!-- ONGLET CALENDRIER MIS À JOUR -->
         <section id="calendar-page" style="display:none;">
             <div class="calendar-nav">
                 <button id="btn-year" class="bubble" onclick="setViewState('year')">Année</button>
@@ -86,10 +85,10 @@
                 <button id="btn-day" class="bubble active" onclick="setViewState('day')">Jours</button>
             </div>
             
-            <!-- TITRE ET BOUTON ANNIVERSAIRE -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin-bottom:15px; position:relative;">
+            <!-- TITRE ET NOUVEAU BOUTON ANNIVERSAIRE (À GAUCHE) -->
+            <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:15px; position:relative;">
+                <button onclick="openBirthdayModal()" class="btn-add-birthday btn-validated-click">+ 🎂</button>
                 <div id="calendar-title" class="calendar-title" style="margin:0; font-size: 1.5em;"></div>
-                <button onclick="openBirthdayModal()" style="background:var(--birthday-color); border:none; color:white; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:1.1rem; margin-top:-5px;">🎂</button>
             </div>
             
             <div id="calendar-content"></div>
