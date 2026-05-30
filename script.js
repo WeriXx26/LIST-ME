@@ -19,7 +19,7 @@ let tasks = [];
 let dailyTodo = [];
 let weeklyTodo = [];
 let routineTodo = [];
-let birthdays = []; // NOUVELLE COLLECTION POUR LES ANNIVERSAIRES
+let birthdays = []; 
 let currentUser = null; 
 let userNickname = ""; 
 let hasShownWelcomeThisSession = false; 
@@ -96,7 +96,6 @@ function getFrenchHolidays(year) {
     addDate(11, 11, "Armistice 1918");
     addDate(12, 25, "Noël");
 
-    // Calcul date de Pâques
     const a = year % 19;
     const b = Math.floor(year / 100);
     const c = year % 100;
@@ -141,7 +140,7 @@ function changeTheme(t) {
     localStorage.setItem('listme_theme', t); 
 }
 
-// --- UTILITAIRE DE RÉACTIVATION ET NETTOYAGE DES CHAMPS SÉCURISÉ ---
+// --- UTILITAIRE DE RÉACTIVATION ET NETTOYAGE DES CHAMPS ---
 function unlockModalFields() {
     const nameField = document.getElementById('task-name');
     const descField = document.getElementById('task-desc');
@@ -256,7 +255,7 @@ function processMidnightAutoArchive() {
     Promise.all(operations).then(() => { isArchiving = false; }).catch(() => { isArchiving = false; });
 }
 
-// --- MOTEUR DE VÉRIFICATION EN CONTINU (+ ANNIVERSAIRES) ---
+// --- MOTEUR DE VÉRIFICATION EN CONTINU (+ CLÔTURE AUTO À 30 MIN) ---
 let lastCheckedDayStr = new Date().toISOString().split('T')[0];
 
 function runNotificationEngine() {
@@ -276,7 +275,6 @@ function runNotificationEngine() {
     let tomorrow = new Date(); tomorrow.setDate(now.getDate() + 1);
     let tomorrowMD = tomorrow.toISOString().split('T')[0].substring(5);
 
-    // Alertes Anniversaires à 09h00
     if (hour === 9 && minute === 0) {
         let todayBirthdays = birthdays.filter(b => b.date.endsWith(todayMD));
         todayBirthdays.forEach(b => {
@@ -406,11 +404,6 @@ function sendNotification(title, body) {
         }
     }
 }
-
-// --- BADGES DE RAPPEL ---
-document.querySelectorAll('.reminder-badge').forEach(badge => { badge.onclick = () => { if(!badge.classList.contains('disabled-frozen')) { badge.classList.toggle('active'); } }; });
-function getSelectedRemindersFromBadges() { let activeReminders = []; document.querySelectorAll('.reminder-badge.active').forEach(badge => { activeReminders.push(badge.getAttribute('data-value')); }); return activeReminders; }
-function setSelectedRemindersToBadges(remindersArray) { document.querySelectorAll('.reminder-badge').forEach(badge => { const val = badge.getAttribute('data-value'); if(remindersArray && remindersArray.includes(val)) { badge.classList.add('active'); } else { badge.classList.remove('active'); } }); }
 
 // --- SURVEILLANCE DE L'ÉTAT DE CONNEXION ---
 auth.onAuthStateChanged((user) => {
@@ -753,7 +746,7 @@ function toggleTaskCheck(id, currentStatus, specificDate) {
             if (remainingDates.length > 0) {
                 db.collection("tasks").add({
                     name: task.name, desc: task.desc || "", date: specificDate, time: task.time || "",
-                    reminders: task.reminders || [], importance: task.importance,
+                    reminders: t.reminders || [], importance: task.importance,
                     completed: true, completedAtStr: todayStr, userId: task.userId,
                     createdAt: task.createdAt || Date.now(), duplicateDays: []
                 });
@@ -851,21 +844,10 @@ document.getElementById('save-task').onclick = () => {
         }
         
         unlockModalFields();
+        document.getElementById('task-modal').style.none = 'none';
         document.getElementById('task-modal').style.display = 'none';
     }
 };
-
-// --- AUTHENTIFICATION BOUTONS ---
-document.getElementById('btn-login').onclick = () => {
-    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
-    if(email && pass) auth.signInWithEmailAndPassword(email, pass).then(() => { showToast("Ravi de vous revoir ! 👋"); }).catch(err => showToast("Erreur : " + err.message));
-};
-document.getElementById('btn-register').onclick = () => {
-    const email = document.getElementById('auth-email').value; const pass = document.getElementById('auth-pass').value;
-    if(email && pass) auth.createUserWithEmailAndPassword(email, pass).then(() => showToast("Compte créé avec succès ! 🎉")).catch(err => showToast("Erreur : " + err.message));
-};
-document.getElementById('btn-google').onclick = () => { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider).then(() => { showToast("Connexion Google réussie ! 🚀"); }).catch((err) => { showToast("Erreur Google : " + err.message); }); };
-document.getElementById('btn-logout').onclick = () => { auth.signOut().then(() => { showToast("Déconnexion réussie."); }); };
 
 // --- ONGLET : CALENDRIER MULTI-DATES (AVEC BANDEAUX MULTICOLORES) ---
 function setViewState(s) { viewState = s; renderCalendar(); }
@@ -995,7 +977,213 @@ function openCalendarDayModal(day, monthName, year, dayTasks, currentFullDate, h
     document.getElementById('calendar-day-modal').style.display = 'flex';
 }
 
-// --- INITIALISATION GENERALE ET BOUTONS DE BASE (CORRIGÉ !) ---
+// --- RECONSTRUCTION COMPLÈTE DE L'ONGLET TO-DO LIST ---
+function setTodoMode(m) { todoMode = m; renderTodo(); }
+function renderTodo() {
+    const c = document.getElementById('todo-content'); if (!c) return;
+    document.querySelectorAll('#todo-page .bubble').forEach(b => b.classList.remove('active'));
+    
+    if (todoMode === 'daily') document.getElementById('btn-daily').classList.add('active');
+    else if (todoMode === 'weekly') document.getElementById('btn-weekly').classList.add('active');
+    else if (todoMode === 'routine') document.getElementById('btn-routine').classList.add('active');
+    
+    if(todoMode === 'daily') {
+        document.getElementById('todo-today-date').innerText = new Date().toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
+        c.innerHTML = '<div class="weekly-container"></div>'; const wc = c.querySelector('.weekly-container');
+        
+        for (let h = 8; h <= 20; h++) {
+            const currentHourStr = `${h.toString().padStart(2, '0')}:00`;
+            let items = dailyTodo.filter(it => it.date === todayStr && parseInt(it.time.split(':')[0]) === h);
+            let weeklyItems = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && parseInt(it.time.split(':')[0]) === h);
+            let routineItems = routineTodo.filter(it => parseInt(it.dayOfWeek) === currentDayOfWeek && parseInt(it.time.split(':')[0]) === h);
+            
+            let combinedItems = [...items, ...weeklyItems, ...routineItems]; 
+            combinedItems.sort((a,b) => a.time.localeCompare(b.time));
+
+            const hourCard = document.createElement('div'); hourCard.className = 'weekly-day-card';
+            hourCard.innerHTML = `
+                <div class="weekly-day-header">
+                    <span class="weekly-day-title">${currentHourStr}</span>
+                    <button onclick="openTodoModal('${h.toString().padStart(2,'0')}:00', false, 0, false)" class="weekly-add-btn">+</button>
+                </div>
+                <div class="weekly-subtasks">
+                    ${combinedItems.map(it => {
+                        const isWeekly = it.hasOwnProperty('dayOfWeek') && !it.hasOwnProperty('isRoutine');
+                        const isRoutine = it.hasOwnProperty('isRoutine');
+                        
+                        let checkFunc = `toggleTodo('${it.id}', ${it.completed})`;
+                        let delFunc = `deleteDailyTodo('${it.id}')`;
+                        let labelSuffix = '';
+                        
+                        if (isWeekly) {
+                            checkFunc = `toggleWeeklyTodo('${it.id}', ${it.completed})`;
+                            delFunc = `deleteWeeklyTodo('${it.id}')`;
+                            labelSuffix = ' <small style="opacity:0.5;">(Hebdo)</small>';
+                        } else if (isRoutine) {
+                            checkFunc = `toggleRoutineTodo('${it.id}', ${it.completed})`;
+                            delFunc = `deleteRoutineTodo('${it.id}')`;
+                            labelSuffix = ' <small style="opacity:0.5; color:var(--primary-dark);">(Type ⚙️)</small>';
+                        }
+                        
+                        return `
+                            <div class="weekly-item">
+                                <span onclick="event.stopPropagation(); ${checkFunc}" style="cursor:pointer;" class="weekly-item-text ${it.completed ? 'todo-completed' : ''}">
+                                    <b>${it.time}</b> : ${it.name}${labelSuffix}
+                                </span>
+                                <div class="weekly-item-actions">
+                                    <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', ${(isWeekly || isRoutine)}, ${(isWeekly || isRoutine) ? it.dayOfWeek : 0}, ${isRoutine})" style="color:var(--primary);">✎</button>
+                                    <button onclick="${delFunc}" style="color:var(--danger);">×</button>
+                                </div>
+                            </div>`;
+                    }).join('') || '<span class="empty-subtasks-msg">Aucun événement</span>'}
+                </div>`;
+            wc.appendChild(hourCard);
+        }
+    } else if (todoMode === 'weekly') {
+        document.getElementById('todo-today-date').innerText = "Planification Hebdomadaire";
+        c.innerHTML = '<div class="weekly-container"></div>'; const wc = c.querySelector('.weekly-container');
+        const presidentialOrder = [1, 2, 3, 4, 5, 6, 0];
+        
+        presidentialOrder.forEach(dayNum => {
+            let dayTasks = weeklyTodo.filter(it => parseInt(it.dayOfWeek) === dayNum);
+            let dayRoutine = routineTodo.filter(it => parseInt(it.dayOfWeek) === dayNum);
+            
+            let combinedTasks = [...dayTasks, ...dayRoutine];
+            combinedTasks.sort((a,b) => a.time.localeCompare(b.time));
+            
+            const dayCard = document.createElement('div'); dayCard.className = 'weekly-day-card';
+            dayCard.innerHTML = `
+                <div class="weekly-day-header">
+                    <span class="weekly-day-title">${dayNamesFr[dayNum]}</span>
+                    <button onclick="openTodoModal('12:00', true, ${dayNum}, false)" class="weekly-add-btn">+</button>
+                </div>
+                <div class="weekly-subtasks">
+                    ${combinedTasks.map(it => {
+                        const isRoutine = it.hasOwnProperty('isRoutine') || routineTodo.some(r => r.id === it.id);
+                        const checkFunc = isRoutine ? `toggleRoutineTodo('${it.id}', ${it.completed})` : `toggleWeeklyTodo('${it.id}', ${it.completed})`;
+                        const delFunc = isRoutine ? `deleteRoutineTodo('${it.id}')` : `deleteWeeklyTodo('${it.id}')`;
+                        
+                        return `
+                        <div class="weekly-item">
+                            <span onclick="${checkFunc}" style="cursor:pointer;" class="weekly-item-text ${it.completed ? 'todo-completed' : ''}">
+                                <b>${it.time}</b> : ${it.name} ${isRoutine ? '<small style="opacity:0.5; color:var(--primary-dark);">(Type ⚙️)</small>':''}
+                            </span>
+                            <div class="weekly-item-actions">
+                                <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum}, ${isRoutine})" style="color:var(--primary);">✎</button>
+                                <button onclick="${delFunc}" style="color:var(--danger);">×</button>
+                            </div>
+                        </div>`;
+                    }).join('') || '<span class="empty-subtasks-msg">Aucune activité planifiée</span>'}
+                </div>`;
+            wc.appendChild(dayCard);
+        });
+    } else if (todoMode === 'routine') {
+        document.getElementById('todo-today-date').innerText = "Configuration de la Semaine Type ⚙️";
+        c.innerHTML = '<div class="weekly-container"></div>'; const wc = c.querySelector('.weekly-container');
+        const presidentialOrder = [1, 2, 3, 4, 5, 6, 0];
+        
+        presidentialOrder.forEach(dayNum => {
+            const dayTasks = routineTodo.filter(it => parseInt(it.dayOfWeek) === dayNum); 
+            dayTasks.sort((a,b) => a.time.localeCompare(b.time));
+            
+            const dayCard = document.createElement('div'); dayCard.className = 'weekly-day-card';
+            dayCard.innerHTML = `
+                <div class="weekly-day-header">
+                    <span class="weekly-day-title">${dayNamesFr[dayNum]}</span>
+                    <button onclick="openTodoModal('12:00', true, ${dayNum}, true)" class="weekly-add-btn">+</button>
+                </div>
+                <div class="weekly-subtasks">
+                    ${dayTasks.map(it => `
+                        <div class="weekly-item">
+                            <span class="weekly-item-text">
+                                <b>${it.time}</b> : ${it.name}
+                            </span>
+                            <div class="weekly-item-actions">
+                                <button onclick="editTodoItem('${it.id}', '${it.name}', '${it.time}', true, ${dayNum}, true)" style="color:var(--primary);">✎</button>
+                                <button onclick="deleteRoutineTodo('${it.id}')" style="color:var(--danger);">×</button>
+                            </div>
+                        </div>`).join('') || '<span class="empty-subtasks-msg">Aucune tâche type définie</span>'}
+                </div>`;
+            wc.appendChild(dayCard);
+        });
+    }
+}
+
+function openTodoModal(time, isWeeklyOrRoutine, dayNum = 1, isRoutine = false) { 
+    editingTodoId = null; 
+    setCustomTime('todo-time', time); 
+    document.getElementById('todo-task-name').value = ''; 
+    document.getElementById('todo-modal-title').innerText = isRoutine ? "Ajouter à la Semaine Type" : "Ajouter à la To-Do List"; 
+    
+    if(isWeeklyOrRoutine) { 
+        document.getElementById('todo-day-selector-block').style.display = 'flex';
+        document.getElementById('todo-day-select').value = dayNum; 
+    } else {
+        document.getElementById('todo-day-selector-block').style.display = 'none';
+    }
+    
+    document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeeklyOrRoutine && !isRoutine); 
+    document.getElementById('save-todo').setAttribute('data-routine-mode', isRoutine); 
+    document.getElementById('todo-modal').style.display = 'flex'; 
+}
+
+function editTodoItem(id, name, time, isWeeklyOrRoutine, dayNum = 1, isRoutine = false) { 
+    editingTodoId = id; 
+    setCustomTime('todo-time', time); 
+    document.getElementById('todo-task-name').value = name; 
+    document.getElementById('todo-modal-title').innerText = isRoutine ? "Modifier la Semaine Type" : "Modifier la To-Do List"; 
+    
+    if(isWeeklyOrRoutine) {
+        document.getElementById('todo-day-selector-block').style.display = 'flex';
+        document.getElementById('todo-day-select').value = dayNum; 
+    } else {
+        document.getElementById('todo-day-selector-block').style.display = 'none';
+    }
+    
+    document.getElementById('save-todo').setAttribute('data-weekly-mode', isWeeklyOrRoutine && !isRoutine); 
+    document.getElementById('save-todo').setAttribute('data-routine-mode', isRoutine); 
+    document.getElementById('todo-modal').style.display = 'flex'; 
+}
+
+document.getElementById('save-todo').onclick = () => {
+    const n = document.getElementById('todo-task-name').value.trim(); 
+    const t = getCustomTime('todo-time');
+    const isWeekly = document.getElementById('save-todo').getAttribute('data-weekly-mode') === 'true';
+    const isRoutine = document.getElementById('save-todo').getAttribute('data-routine-mode') === 'true';
+    
+    if(n && t && currentUser) { 
+        let targetCollection = "dailyTodo";
+        if (isWeekly) targetCollection = "weeklyTodo";
+        else if (isRoutine) targetCollection = "routineTodo";
+
+        if(editingTodoId) {
+            let updateData = { name: n, time: t };
+            if(isWeekly || isRoutine) updateData.dayOfWeek = document.getElementById('todo-day-select').value;
+            db.collection(targetCollection).doc(editingTodoId).update(updateData).then(() => {
+                showToast(isRoutine ? "Semaine type modifiée ! ⚙️" : "Activité modifiée ! ✎");
+            });
+            editingTodoId = null;
+        } else {
+            if(isRoutine) {
+                db.collection("routineTodo").add({ name: n, time: t, dayOfWeek: document.getElementById('todo-day-select').value, completed: false, isRoutine: true, userId: currentUser.uid }).then(() => {
+                    showToast("Ajouté à la semaine type ! ⚙️");
+                });
+            } else if(isWeekly) { 
+                db.collection("weeklyTodo").add({ name: n, time: t, dayOfWeek: document.getElementById('todo-day-select').value, completed: false, userId: currentUser.uid }).then(() => {
+                    showToast("Activité hebdomadaire ajoutée ! 🗓️");
+                }); 
+            } else { 
+                db.collection("dailyTodo").add({ name: n, time: t, date: todayStr, completed: false, userId: currentUser.uid }).then(() => {
+                    showToast("Activité ajoutée ! ✨");
+                }); 
+            }
+        }
+        document.getElementById('todo-modal').style.display = 'none'; 
+        document.getElementById('todo-task-name').value = '';
+    }
+};
+
+// --- INITIALISATION GENERALE ET BOUTONS DE BASE ---
 document.getElementById('add-task-btn').onclick = () => { 
     editingId = null; 
     unlockModalFields();
